@@ -94,6 +94,7 @@ export function App() {
           }}
           onChecklist={() => setScreen({ name: 'checklist' })}
           onTrips={() => setScreen({ name: 'viagens' })}
+          onProfile={() => setScreen({ name: 'perfil' })}
         />
       )}
 
