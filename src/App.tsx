@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { OccurrenceSheet } from './components/OccurrenceSheet'
+import { PwaManager } from './components/pwa/PwaManager'
 import { Shell } from './components/Shell'
 import { driver } from './data'
 import { LoginPage } from './pages/LoginPage'
@@ -28,7 +29,9 @@ export function App() {
   useEffect(() => {
     const trip = screen.name === 'viagem' ? state.trips.find((item) => item.id === screen.id) : undefined
     const title = screen.name === 'viagem' && trip ? trip.codigo : titles[screen.name]
-    document.title = state.loggedIn ? `${title} · Rota` : 'Entrar · Rota'
+    document.title = state.loggedIn
+      ? `${title} · Transportadora Braulio`
+      : 'Entrar · Transportadora Braulio'
   }, [screen, state.loggedIn, state.trips])
 
   const login = (matricula: string, senha: string) => {
@@ -46,7 +49,12 @@ export function App() {
   }
 
   if (!state.loggedIn) {
-    return <LoginPage error={loginError} onSubmit={login} />
+    return (
+      <>
+        <PwaManager />
+        <LoginPage error={loginError} onSubmit={login} />
+      </>
+    )
   }
 
   const active = screen.name === 'viagem' ? screen.from : screen.name
@@ -60,6 +68,8 @@ export function App() {
   const openTrip = (id: string, from: 'hoje' | 'viagens') => setScreen({ name: 'viagem', id, from })
 
   return (
+    <>
+    <PwaManager />
     <Shell
       title={title}
       active={active}
@@ -153,5 +163,6 @@ export function App() {
         />
       )}
     </Shell>
+    </>
   )
 }

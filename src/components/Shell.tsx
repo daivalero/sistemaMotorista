@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { driver } from '../data'
 import type { Screen } from '../types'
 import { Icon } from './Icons'
+import { Logo } from './Logo'
 
 const nav = [
   { name: 'hoje', label: 'Hoje', icon: 'hoje' },
@@ -37,8 +38,8 @@ export function Shell({
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">Rota</span>
-          <span className="brand-sub">sistema do motorista</span>
+          <Logo variant="compact" />
+          <span className="brand-sub">Sistema do motorista</span>
         </div>
         <nav className="side-nav" aria-label="Seções">
           {nav.map((item) => (
@@ -77,9 +78,7 @@ export function Shell({
               </button>
             )}
             {active === 'hoje' && !showBack ? (
-              <p className="wordmark">
-                Rota <span>sistema do motorista</span>
-              </p>
+              <Logo variant="compact" />
             ) : (
               <h1 className="top-title">{title}</h1>
             )}
@@ -122,7 +121,6 @@ export function Shell({
           </button>
         ))}
       </nav>
-
     </div>
   )
 }
