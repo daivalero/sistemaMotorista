@@ -73,7 +73,6 @@ export function LoginPage({ error, onSubmit }: Props) {
         <div className="login-stack">
           <div className="login-mobile-brand">
             <Logo variant="full" />
-            <h1>Transportadora Braulio</h1>
             <p className="muted">Entre para ver as rotas de hoje</p>
           </div>
 
@@ -81,7 +80,7 @@ export function LoginPage({ error, onSubmit }: Props) {
             <span className="gradient-line" aria-hidden />
             <div className="login-card-head">
               <h1>Entrar</h1>
-              <p className="muted">Use a matrícula da base para acessar.</p>
+              <p className="muted">Use a matrícula da base.</p>
             </div>
 
             <label className="field">

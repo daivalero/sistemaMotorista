@@ -9,17 +9,17 @@
   --ink-muted: #64748b;
   --line: rgb(255 255 255 / 0.08);
   --line-strong: rgb(255 255 255 / 0.14);
-  --accent: #ff6b00;
-  --accent-dark: #e55f00;
-  --accent-soft: rgb(255 107 0 / 0.15);
+  --accent: #d96618;
+  --accent-dark: #bf5814;
+  --accent-soft: rgb(217 102 24 / 0.1);
   --green: #22c55e;
-  --green-soft: rgb(34 197 94 / 0.12);
-  --amber: #f59e0b;
-  --amber-soft: rgb(245 158 11 / 0.14);
-  --red: #f43f5e;
-  --red-soft: rgb(244 63 94 / 0.12);
-  --blue-soft: rgb(59 130 246 / 0.14);
-  --shadow: 0 4px 24px rgb(0 0 0 / 0.28);
+  --green-soft: rgb(34 197 94 / 0.1);
+  --amber: #d97706;
+  --amber-soft: rgb(217 119 6 / 0.1);
+  --red: #e11d48;
+  --red-soft: rgb(225 29 72 / 0.1);
+  --blue-soft: rgb(59 130 246 / 0.1);
+  --shadow: 0 4px 18px rgb(0 0 0 / 0.22);
   --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --radius-card: 16px;
@@ -118,21 +118,21 @@ p {
 
 .eyebrow {
   margin: 0 0 6px;
-  color: var(--accent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .eyebrow.light {
-  color: #ffb070;
+  color: var(--ink-soft);
 }
 
 .lede {
-  margin: 0 0 16px;
+  margin: 0 0 14px;
   color: var(--ink-soft);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 
 .lede.tight {
@@ -175,15 +175,15 @@ p {
 }
 
 .logo-full img {
-  height: 4.25rem;
+  height: 3.4rem;
   width: auto;
-  max-width: min(100%, 320px);
+  max-width: min(100%, 260px);
 }
 
 .logo-compact img {
-  height: 2.25rem;
+  height: 1.9rem;
   width: auto;
-  max-width: min(100%, 200px);
+  max-width: min(100%, 160px);
 }
 
 .btn {
@@ -191,11 +191,12 @@ p {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 16px;
   border: 1px solid transparent;
   border-radius: var(--radius-button);
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 0.95rem;
   text-align: center;
   transition: background 0.2s, border-color 0.2s, transform 0.15s;
 }
@@ -211,7 +212,6 @@ p {
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 2px 8px rgb(255 107 0 / 0.28);
 }
 
 .btn-ghost {
@@ -249,10 +249,15 @@ p {
 .text-btn {
   border: 0;
   background: transparent;
-  color: var(--accent);
-  font-weight: 700;
-  min-height: 44px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-height: 40px;
   padding: 0;
+}
+
+.text-btn:hover {
+  color: var(--ink);
 }
 
 .badge {
@@ -305,7 +310,7 @@ p {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), #ff9a3c);
+  background: var(--accent);
 }
 
 .panel,
@@ -330,7 +335,8 @@ p {
 .empty-hero h2,
 .sheet h2 {
   margin: 0 0 8px;
-  font-size: 1.15rem;
+  font-size: 1.02rem;
+  font-weight: 700;
 }
 
 .block-head {
@@ -348,8 +354,8 @@ p {
   position: absolute;
   inset-inline: 0;
   top: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #ff6b00, #ff9a3c, #ffd400);
+  height: 1px;
+  background: rgb(217 102 24 / 0.45);
 }
 
 .login {
@@ -369,17 +375,17 @@ p {
 .login-glow-a {
   left: -6rem;
   top: 0;
-  width: 20rem;
-  height: 20rem;
-  background: rgb(255 107 0 / 0.22);
+  width: 16rem;
+  height: 16rem;
+  background: rgb(217 102 24 / 0.08);
 }
 
 .login-glow-b {
   right: -4rem;
   bottom: 0;
-  width: 18rem;
-  height: 18rem;
-  background: rgb(255 212 0 / 0.08);
+  width: 14rem;
+  height: 14rem;
+  background: rgb(148 163 184 / 0.05);
 }
 
 .login-hero {
@@ -411,16 +417,17 @@ p {
 
 .login-mobile-brand {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   justify-items: center;
   text-align: center;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .login-mobile-brand h1 {
   margin: 0;
-  font-size: 1.65rem;
-  font-weight: 800;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .login-card {
@@ -432,9 +439,9 @@ p {
 }
 
 .login-card h1 {
-  margin: 8px 0 0;
-  font-size: clamp(1.6rem, 5vw, 2rem);
-  font-weight: 800;
+  margin: 4px 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
 }
 
 .login-benefits {
@@ -458,12 +465,13 @@ p {
 .login-benefit-icon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
 }
 
 .login-benefit strong,
@@ -517,8 +525,8 @@ textarea:hover {
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(255 107 0 / 0.22);
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.06);
 }
 
 textarea {
@@ -575,8 +583,8 @@ textarea {
 
 .top-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 1.05rem;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -639,33 +647,35 @@ textarea {
 
 .tab.active .tab-icon {
   background: var(--bg-elevated);
-  color: var(--accent);
+  color: var(--ink);
 }
 
 .dot {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 99px;
   background: var(--accent);
 }
 
 .toast {
   margin: 0 0 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 12px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .greeting {
   margin: 0;
-  font-size: clamp(2rem, 8vw, 3rem);
-  font-weight: 800;
-  line-height: 0.95;
+  font-size: clamp(1.45rem, 5vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 .home-grid,
@@ -691,16 +701,17 @@ textarea {
   gap: 2px;
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid rgb(245 158 11 / 0.35);
-  border-radius: 16px;
-  background: var(--amber-soft);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-elevated);
   text-align: left;
   color: var(--ink);
 }
 
 .alert-banner span {
-  color: #fbbf24;
-  font-weight: 700;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.88rem;
 }
 
 .ticket {
@@ -714,8 +725,8 @@ textarea {
   position: absolute;
   inset-inline: 0;
   top: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #ff6b00, #ff9a3c, #ffd400);
+  height: 2px;
+  background: rgb(217 102 24 / 0.4);
 }
 
 .ticket-top,
@@ -730,21 +741,21 @@ textarea {
 }
 
 .ticket-time {
-  font-size: 1.7rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .ticket-code h2,
 .detail-title h2 {
   margin: 0;
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  font-weight: 800;
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
 .route-line {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .ticket-meta,
@@ -779,8 +790,8 @@ textarea {
 .stats strong {
   display: block;
   font-family: var(--display);
-  font-size: 1.6rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .ticket-actions,
@@ -822,8 +833,8 @@ textarea {
 }
 
 .stop-preview li.now {
-  border-color: rgb(255 107 0 / 0.45);
-  background: var(--accent-soft);
+  border-color: var(--line-strong);
+  background: var(--surface);
 }
 
 .stop-preview strong,
@@ -898,9 +909,9 @@ textarea {
 }
 
 .chip.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+  color: var(--ink);
 }
 
 .trip-list {
@@ -977,8 +988,9 @@ textarea {
 }
 
 .stop-em_rota .stop-rail span {
-  background: var(--accent);
-  color: white;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgb(217 102 24 / 0.3);
 }
 
 .stop-entregue .stop-rail span {
@@ -1055,7 +1067,8 @@ textarea {
 
 .check-summary strong {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
 .check-list {
@@ -1116,13 +1129,15 @@ textarea {
 .avatar {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 800;
+  border-radius: 11px;
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .avatar.large {
@@ -1183,9 +1198,9 @@ textarea {
 }
 
 .reason.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+  color: var(--ink);
 }
 
 .empty-hero {
@@ -1253,12 +1268,13 @@ textarea {
 .pwa-install-icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  border-radius: 11px;
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
 }
 
 .pwa-install-title {
@@ -1428,7 +1444,7 @@ textarea {
   }
 
   .side-link.active {
-    background: var(--accent-soft);
+    background: var(--surface);
     color: var(--ink);
   }
 
@@ -1441,10 +1457,11 @@ textarea {
     min-width: 22px;
     padding: 2px 6px;
     border-radius: 99px;
-    background: var(--accent);
-    color: white;
+    background: var(--surface-hover);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
     font-style: normal;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-align: center;
   }
 
@@ -1541,18 +1558,18 @@ textarea {
 
   .hero-title {
     margin: 0;
-    max-width: 14ch;
-    font-size: clamp(2.4rem, 4vw, 3.6rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 0.95;
+    max-width: 16ch;
+    font-size: clamp(1.7rem, 2.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
   }
 
   .hero-copy {
     max-width: 38ch;
     margin: 0;
     color: var(--ink-soft);
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .login-panel {
