@@ -2146,26 +2146,29 @@ select {
   }
 }
 
-/* ——— Formulário de registro (mobile-first, fundo claro) ——— */
+/* ——— Formulário de registro (mobile-first, fundo preto) ——— */
 .register-form {
-  --rf-bg: #f3f4f6;
-  --rf-surface: #ffffff;
-  --rf-ink: #1a1d23;
-  --rf-muted: #6b7280;
-  --rf-soft: #9ca3af;
-  --rf-line: #e5e7eb;
+  --rf-bg: #0b0d10;
+  --rf-surface: #15181e;
+  --rf-ink: #f8fafc;
+  --rf-muted: #94a3b8;
+  --rf-soft: #64748b;
+  --rf-line: rgb(255 255 255 / 0.1);
   --rf-accent: #ff6500;
   --rf-accent-dark: #e55a00;
-  --rf-accent-soft: rgb(255 101 0 / 0.1);
+  --rf-accent-soft: rgb(255 101 0 / 0.14);
   --rf-radius: 14px;
   --rf-touch: 48px;
+  --rf-field: #111318;
+  --rf-elevated: #1a1e26;
   margin: -16px;
   padding: 16px 16px calc(96px + var(--safe-bottom));
   background:
-    radial-gradient(120% 60% at 100% -10%, rgb(255 101 0 / 0.08), transparent 55%),
-    linear-gradient(180deg, #fafbfc 0%, var(--rf-bg) 40%);
+    radial-gradient(120% 60% at 100% -10%, rgb(255 101 0 / 0.12), transparent 55%),
+    linear-gradient(180deg, #111318 0%, var(--rf-bg) 45%);
   color: var(--rf-ink);
   min-height: calc(100dvh - 56px - 4.25rem);
+  color-scheme: dark;
 }
 
 .register-hero {
@@ -2204,25 +2207,29 @@ select {
   margin-top: 4px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #eef0f3;
+  background: var(--rf-elevated);
   color: var(--rf-muted);
   font-size: 0.78rem;
   font-weight: 600;
+  border: 1px solid var(--rf-line);
 }
 
 .register-sync--sincronizado {
-  background: rgb(34 197 94 / 0.12);
-  color: #15803d;
+  background: rgb(34 197 94 / 0.14);
+  color: #4ade80;
+  border-color: transparent;
 }
 
 .register-sync--enviando {
-  background: rgb(255 101 0 / 0.12);
-  color: var(--rf-accent-dark);
+  background: rgb(255 101 0 / 0.14);
+  color: #ff8a3d;
+  border-color: transparent;
 }
 
 .register-sync--erro {
-  background: rgb(225 29 72 / 0.1);
-  color: #be123c;
+  background: rgb(225 29 72 / 0.14);
+  color: #fb7185;
+  border-color: transparent;
 }
 
 .register-section {
@@ -2232,7 +2239,7 @@ select {
   border: 1px solid var(--rf-line);
   border-radius: var(--rf-radius);
   background: var(--rf-surface);
-  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.28);
 }
 
 .register-section-head {
@@ -2276,7 +2283,7 @@ select {
   padding: 6px 10px;
   border-radius: 999px;
   background: var(--rf-accent-soft);
-  color: var(--rf-accent-dark);
+  color: #ff8a3d;
   font-size: 0.88rem;
   font-weight: 700;
   white-space: nowrap;
@@ -2324,7 +2331,7 @@ select {
   padding: 12px 14px;
   border: 1px solid var(--rf-line);
   border-radius: 12px;
-  background: #fafbfc;
+  background: var(--rf-field);
   color: var(--rf-ink);
   appearance: none;
 }
@@ -2341,18 +2348,18 @@ select {
   outline: none;
   border-color: var(--rf-accent);
   box-shadow: 0 0 0 3px var(--rf-accent-soft);
-  background: #fff;
+  background: #0f1217;
 }
 
 .register-field input:disabled,
 .register-field select:disabled,
 .register-field textarea:disabled {
-  opacity: 0.7;
-  background: #f0f1f3;
+  opacity: 0.65;
+  background: #0d0f13;
 }
 
 .register-field-error {
-  color: #be123c;
+  color: #fb7185;
   font-size: 0.8rem;
 }
 
@@ -2376,10 +2383,11 @@ select {
   margin: 0;
   padding: 14px;
   border-radius: 12px;
-  background: #f7f8fa;
+  background: var(--rf-field);
   color: var(--rf-muted);
   font-size: 0.92rem;
   text-align: center;
+  border: 1px solid var(--rf-line);
 }
 
 .delivery-list,
@@ -2397,7 +2405,7 @@ select {
 .attachment-card {
   border: 1px solid var(--rf-line);
   border-radius: 12px;
-  background: #fafbfc;
+  background: var(--rf-field);
   overflow: hidden;
 }
 
@@ -2448,18 +2456,19 @@ select {
 }
 
 .delivery-status--pendente {
-  background: #eef0f3;
-  color: #4b5563;
+  background: var(--rf-elevated);
+  color: var(--rf-muted);
+  border: 1px solid var(--rf-line);
 }
 
 .delivery-status--entregue {
-  background: rgb(34 197 94 / 0.14);
-  color: #15803d;
+  background: rgb(34 197 94 / 0.16);
+  color: #4ade80;
 }
 
 .delivery-status--ocorrencia {
-  background: rgb(225 29 72 / 0.1);
-  color: #be123c;
+  background: rgb(225 29 72 / 0.16);
+  color: #fb7185;
 }
 
 .delivery-card-body {
@@ -2492,13 +2501,13 @@ select {
 }
 
 .attach-pill--ok {
-  background: rgb(34 197 94 / 0.14);
-  color: #15803d;
+  background: rgb(34 197 94 / 0.16);
+  color: #4ade80;
 }
 
 .attach-pill--pending {
-  background: rgb(255 101 0 / 0.12);
-  color: var(--rf-accent-dark);
+  background: rgb(255 101 0 / 0.16);
+  color: #ff8a3d;
 }
 
 .register-proof {
@@ -2536,7 +2545,7 @@ select {
   border-radius: 12px;
   border: 1px dashed var(--rf-accent);
   background: var(--rf-accent-soft);
-  color: var(--rf-accent-dark);
+  color: #ff8a3d;
   font-size: 0.9rem;
   font-weight: 650;
   cursor: pointer;
@@ -2608,8 +2617,8 @@ select {
 
 .register-add-btn--ghost {
   background: transparent;
-  color: var(--rf-accent-dark);
-  border: 1.5px solid rgb(255 101 0 / 0.35);
+  color: #ff8a3d;
+  border: 1.5px solid rgb(255 101 0 / 0.4);
   box-shadow: none;
 }
 
@@ -2617,8 +2626,8 @@ select {
   min-height: 44px;
   border: 0;
   border-radius: 10px;
-  background: rgb(225 29 72 / 0.08);
-  color: #be123c;
+  background: rgb(225 29 72 / 0.14);
+  color: #fb7185;
   font-weight: 650;
 }
 
@@ -2636,7 +2645,8 @@ select {
   gap: 4px;
   padding: 12px;
   border-radius: 12px;
-  background: #f7f8fa;
+  background: var(--rf-field);
+  border: 1px solid var(--rf-line);
 }
 
 .register-summary-grid span {
@@ -2654,8 +2664,8 @@ select {
   margin: 0;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgb(225 29 72 / 0.08);
-  color: #be123c;
+  background: rgb(225 29 72 / 0.14);
+  color: #fb7185;
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -2684,7 +2694,7 @@ select {
 }
 
 .register-form .btn-ghost {
-  background: #fff;
+  background: var(--rf-elevated);
   border: 1px solid var(--rf-line);
   color: var(--rf-ink);
 }
@@ -2700,9 +2710,9 @@ select {
   gap: 10px;
   padding: 10px 12px;
   border-top: 1px solid var(--rf-line);
-  background: rgb(255 255 255 / 0.94);
+  background: rgb(11 13 16 / 0.94);
   backdrop-filter: blur(10px);
-  box-shadow: 0 -6px 20px rgb(16 24 40 / 0.08);
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 0.45);
 }
 
 .register-sticky-total {
