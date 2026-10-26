@@ -1,19 +1,28 @@
-# Transportadora Braulio
+# Transportadora Braulio — sistema do motorista
 
-Sistema do motorista: saídas do dia, paradas, checklist do veículo e ocorrências. O layout nasce no celular e se adapta a tablet e desktop.
+Registro de viagens agregadas: início com KM, entregas, gastos com comprovantes, finalização e conferência administrativa.
 
 ## Rodar
 
 ```bash
 npm install
+cp .env.example .env   # opcional: preencha Supabase
 npm run dev
 ```
 
-Demonstração: matrícula `1042`, senha `rota`.
+### Demo local (sem inventar viagens)
+
+- Motorista: matrícula `1042`, senha `rota`
+- Admin: matrícula `9001`, senha `admin`
+
+Sem `VITE_SUPABASE_*`, os registros ficam **neste aparelho** e o app deixa isso explícito. Não há viagens fictícias pré-carregadas.
+
+### Supabase
+
+1. Crie o projeto e rode `supabase/migrations/001_viagens.sql`
+2. Preencha `.env` com URL e anon key
+3. Bucket `comprovantes` (já no SQL)
 
 ## PWA
 
-- Instalável no Android, iPhone, iPad e desktop.
-- No Android/Chrome, use o aviso de instalação exibido pelo app.
-- No iPhone/iPad, abra o menu **Compartilhar** e toque em **Adicionar à Tela de Início**.
-- A interface abre sem conexão; os dados da demonstração ficam neste aparelho.
+Instalável no celular (Android/iOS) via aviso do app ou “Adicionar à Tela de Início”.

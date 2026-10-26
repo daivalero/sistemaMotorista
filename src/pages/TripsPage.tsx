@@ -1,46 +1,50 @@
-import { useState } from 'react'
-import { formatShortDate, todayISO } from '../data'
-import { countDone } from '../logic'
-import type { Trip } from '../types'
-import { Badge } from '../components/Ui'
+import { useMemo, useState } from 'react'
+import { Card } from '../components/Card'
+import { formatDateTime } from '../data'
+import { deliveriesOf } from '../logic'
+import { useStore } from '../store'
+import type { TripStatus } from '../types'
 
-type Filter = 'todas' | 'hoje' | 'andamento' | 'concluidas'
-
-const filters: { id: Filter; label: string }[] = [
+const filters: { id: 'todas' | TripStatus; label: string }[] = [
   { id: 'todas', label: 'Todas' },
-  { id: 'hoje', label: 'Hoje' },
-  { id: 'andamento', label: 'Em andamento' },
-  { id: 'concluidas', label: 'Concluídas' },
+  { id: 'em_andamento', label: 'Em andamento' },
+  { id: 'aguardando_conferencia', label: 'Conferência' },
+  { id: 'precisa_correcao', label: 'Correção' },
+  { id: 'concluida', label: 'Concluídas' },
 ]
 
 type Props = {
-  trips: Trip[]
   onOpen: (id: string) => void
 }
 
-export function TripsPage({ trips, onOpen }: Props) {
-  const [filter, setFilter] = useState<Filter>('todas')
-  const today = todayISO()
+export function TripsPage({ onOpen }: Props) {
+  const { state } = useStore()
+  const profile = state.session.profile
+  const [filter, setFilter] = useState<(typeof filters)[number]['id']>('todas')
 
-  const visible = trips
-    .filter((trip) => {
-      if (filter === 'hoje') return trip.data === today
-      if (filter === 'andamento') return trip.status === 'em_andamento'
-      if (filter === 'concluidas') return trip.status === 'concluida'
-      return true
-    })
-    .sort((a, b) => (b.data + b.saida).localeCompare(a.data + a.saida))
+  const trips = useMemo(() => {
+    if (!profile) return []
+    return state.trips
+      .filter((trip) => (profile.role === 'admin' ? true : trip.driverId === profile.id))
+      .filter((trip) => (filter === 'todas' ? true : trip.status === filter))
+      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+  }, [state.trips, profile, filter])
+
+  if (!profile) return null
 
   return (
-    <div className="page">
-      <p className="lede tight">Rotas liberadas pela base, da mais recente para a mais antiga.</p>
-      <div className="filters" role="tablist" aria-label="Filtrar viagens">
+    <div className="page-stack">
+      <header className="page-intro">
+        <p className="home-section-label">Histórico</p>
+        <h1>Minhas viagens</h1>
+        <p className="muted">Consulte entregas, despesas e documentos. Viagens concluídas não podem ser alteradas livremente.</p>
+      </header>
+
+      <div className="filters">
         {filters.map((item) => (
           <button
             key={item.id}
             type="button"
-            role="tab"
-            aria-selected={filter === item.id}
             className={filter === item.id ? 'chip active' : 'chip'}
             onClick={() => setFilter(item.id)}
           >
@@ -49,29 +53,26 @@ export function TripsPage({ trips, onOpen }: Props) {
         ))}
       </div>
 
-      {visible.length === 0 ? (
-        <section className="empty-hero">
-          <h2>Nada neste filtro</h2>
-          <p>Troque o filtro para ver outras rotas.</p>
-        </section>
+      {trips.length === 0 ? (
+        <Card padding="lg">
+          <h2>Nenhuma viagem aqui</h2>
+          <p className="muted">Inicie uma viagem na home para começar a registrar entregas e gastos.</p>
+        </Card>
       ) : (
         <ul className="trip-list">
-          {visible.map((trip) => (
+          {trips.map((trip) => (
             <li key={trip.id}>
               <button type="button" className="trip-card" onClick={() => onOpen(trip.id)}>
                 <div className="trip-card-top">
-                  <span className="code">{trip.codigo}</span>
-                  <Badge status={trip.status} />
+                  <strong>{formatDateTime(trip.startedAt)}</strong>
+                  <span className={`badge badge-${trip.status}`}>{statusLabel(trip.status)}</span>
                 </div>
-                <strong>
-                  {trip.origem} → {trip.regiao}
-                </strong>
-                <span className="muted">
-                  {formatShortDate(trip.data)} · saída {trip.saida} · {trip.km} km
-                </span>
-                <span className="trip-foot">
-                  {countDone(trip)}/{trip.paradas.length} paradas · {trip.placa}
-                </span>
+                <p className="muted">
+                  {deliveriesOf(state, trip.id).length} entregas · KM {trip.kmStart}
+                  {trip.kmEnd != null ? ` → ${trip.kmEnd}` : ''}
+                  {trip.distanceKm != null ? ` · ${trip.distanceKm} km` : ''}
+                </p>
+                {trip.syncState === 'local' && <span className="sync-pill">Local</span>}
               </button>
             </li>
           ))}
@@ -79,4 +80,19 @@ export function TripsPage({ trips, onOpen }: Props) {
       )}
     </div>
   )
+}
+
+function statusLabel(status: string) {
+  switch (status) {
+    case 'em_andamento':
+      return 'Em andamento'
+    case 'aguardando_conferencia':
+      return 'Conferência'
+    case 'precisa_correcao':
+      return 'Correção'
+    case 'concluida':
+      return 'Concluída'
+    default:
+      return status
+  }
 }

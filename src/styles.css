@@ -181,9 +181,9 @@ p {
 }
 
 .logo-compact img {
-  height: 1.9rem;
+  height: 2.35rem;
   width: auto;
-  max-width: min(100%, 160px);
+  max-width: min(100%, 200px);
 }
 
 .btn {
@@ -1502,9 +1502,7 @@ textarea {
     max-width: min(520px, 100%);
   }
 
-  .topbar.is-home {
-    display: none;
-  }
+  /* logo permanece visível na home */
 
   .content {
     padding: 24px 36px 40px;
@@ -1970,3 +1968,143 @@ textarea {
   }
 }
 
+
+/* —— Fluxo de viagens —— */
+.page-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.page-intro h1 {
+  margin: 4px 0 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.form-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.form-stack .fine.left,
+.fine.left {
+  text-align: left;
+}
+
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  background: var(--bg-elevated);
+  padding: 12px 14px;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.sync-pill {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.proof-thumb {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.mini-list.static li {
+  border: 0;
+  padding: 6px 0;
+  background: transparent;
+}
+
+.admin-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-expense {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.admin-expense-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.subhead {
+  margin: 16px 0 8px;
+  font-size: 0.95rem;
+}
+
+.badge-aguardando_conferencia {
+  background: var(--amber-soft);
+  color: #fbbf24;
+}
+
+.badge-precisa_correcao {
+  background: var(--red-soft);
+  color: #fb7185;
+}
+
+.badge-em_andamento {
+  background: var(--blue-soft);
+  color: #93c5fd;
+}
+
+.badge-concluida,
+.badge-entregue {
+  background: var(--green-soft);
+  color: #4ade80;
+}
+
+.badge-pendente {
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+
+.badge-ocorrencia {
+  background: var(--red-soft);
+  color: #fb7185;
+}
+
+.tabbar {
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+}
+
+@media (min-width: 900px) {
+  .admin-grid {
+    grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.4fr);
+    align-items: start;
+  }
+}

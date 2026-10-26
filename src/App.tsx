@@ -1,54 +1,80 @@
 import { useEffect, useState } from 'react'
-import { OccurrenceSheet } from './components/OccurrenceSheet'
 import { PwaManager } from './components/pwa/PwaManager'
 import { Shell } from './components/Shell'
-import { driver } from './data'
-import { LoginPage } from './pages/LoginPage'
-import { ChecklistPage } from './pages/ChecklistPage'
+import { demoCredentials } from './data'
+import { supabaseConfigured } from './lib/supabase'
+import { AdminPage } from './pages/AdminPage'
 import { HomePage } from './pages/HomePage'
+import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { StartTripPage } from './pages/StartTripPage'
 import { TripPage } from './pages/TripPage'
 import { TripsPage } from './pages/TripsPage'
+import { ensureDriverSeed } from './services/trips'
 import { useStore } from './store'
 import type { Screen } from './types'
 
 const titles: Record<Screen['name'], string> = {
   hoje: 'Hoje',
-  viagens: 'Viagens',
-  checklist: 'Checklist',
-  perfil: 'Perfil',
+  viagens: 'Minhas viagens',
   viagem: 'Viagem',
+  perfil: 'Perfil',
+  admin: 'Conferência',
+  iniciar: 'Iniciar viagem',
 }
 
 export function App() {
   const { state, dispatch, toast, notify } = useStore()
   const [screen, setScreen] = useState<Screen>({ name: 'hoje' })
   const [loginError, setLoginError] = useState('')
-  const [sheet, setSheet] = useState<{ tripId: string; stopId: string } | null>(null)
 
   useEffect(() => {
-    const trip = screen.name === 'viagem' ? state.trips.find((item) => item.id === screen.id) : undefined
-    const title = screen.name === 'viagem' && trip ? trip.codigo : titles[screen.name]
-    document.title = state.loggedIn
+    const title = titles[screen.name]
+    document.title = state.session.loggedIn
       ? `${title} · Transportadora Braulio`
       : 'Entrar · Transportadora Braulio'
-  }, [screen, state.loggedIn, state.trips])
+  }, [screen, state.session.loggedIn])
 
   const login = (matricula: string, senha: string) => {
     if (!matricula || !senha) {
       setLoginError('Informe a matrícula e a senha.')
       return
     }
-    if (matricula !== driver.matricula || senha !== driver.senha) {
-      setLoginError('Matrícula ou senha não conferem. Na demonstração, use 1042 e rota.')
+
+    const motoristaOk =
+      matricula === demoCredentials.motorista.matricula && senha === demoCredentials.motorista.senha
+    const adminOk =
+      matricula === demoCredentials.admin.matricula && senha === demoCredentials.admin.senha
+
+    if (!motoristaOk && !adminOk) {
+      setLoginError(
+        supabaseConfigured
+          ? 'Credenciais inválidas.'
+          : 'Na demo local use 1042/rota (motorista) ou 9001/admin.',
+      )
       return
     }
+
+    const profile = adminOk ? demoCredentials.admin.profile : demoCredentials.motorista.profile
+    if (profile.role === 'motorista') {
+      const hasVehicles = state.vehicles.some((v) => v.driverId === profile.id)
+      if (!hasVehicles) {
+        ensureDriverSeed(profile).vehicles.forEach((vehicle) =>
+          dispatch({ type: 'upsert-vehicle', vehicle }),
+        )
+      }
+    }
     setLoginError('')
-    dispatch({ type: 'login' })
+    dispatch({ type: 'login', profile })
     setScreen({ name: 'hoje' })
+    notify(
+      supabaseConfigured
+        ? 'Sessão iniciada.'
+        : 'Modo local: os registros ficam neste aparelho até configurar o Supabase.',
+    )
   }
 
-  if (!state.loggedIn) {
+  if (!state.session.loggedIn) {
     return (
       <>
         <PwaManager />
@@ -57,113 +83,79 @@ export function App() {
     )
   }
 
-  const active = screen.name === 'viagem' ? screen.from : screen.name
-  const trip = screen.name === 'viagem' ? state.trips.find((item) => item.id === screen.id) : undefined
-  const title = screen.name === 'viagem' && trip ? trip.codigo : titles[screen.name]
-  const attention = state.checks.filter((item) => item.ok !== true).length
-  const sheetStop =
-    sheet &&
-    state.trips.find((item) => item.id === sheet.tripId)?.paradas.find((stop) => stop.id === sheet.stopId)
+  const profile = state.session.profile!
+  const shellActive =
+    screen.name === 'viagem'
+      ? screen.from === 'admin'
+        ? 'admin'
+        : screen.from === 'viagens'
+          ? 'viagens'
+          : 'hoje'
+      : screen.name === 'iniciar'
+        ? 'hoje'
+        : screen.name
 
-  const openTrip = (id: string, from: 'hoje' | 'viagens') => setScreen({ name: 'viagem', id, from })
+  const title = screen.name === 'viagem' ? 'Viagem' : titles[screen.name]
+
+  const openTrip = (id: string, from: 'hoje' | 'viagens' | 'admin') =>
+    setScreen({ name: 'viagem', id, from })
 
   return (
     <>
-    <PwaManager />
-    <Shell
-      title={title}
-      active={active}
-      showBack={screen.name === 'viagem'}
-      onBack={() => {
-        if (screen.name !== 'viagem') return
-        setScreen(screen.from === 'hoje' ? { name: 'hoje' } : { name: 'viagens' })
-      }}
-      onNavigate={setScreen}
-      attention={attention}
-      toast={toast}
-    >
-      {screen.name === 'hoje' && (
-        <HomePage
-          trips={state.trips}
-          checks={state.checks}
-          onOpen={(id) => openTrip(id, 'hoje')}
-          onStart={(id) => {
-            dispatch({ type: 'start-trip', tripId: id })
-            notify('Viagem iniciada. A primeira parada está em rota.')
-            openTrip(id, 'hoje')
-          }}
-          onChecklist={() => setScreen({ name: 'checklist' })}
-          onTrips={() => setScreen({ name: 'viagens' })}
-          onProfile={() => setScreen({ name: 'perfil' })}
-        />
-      )}
-
-      {screen.name === 'viagens' && <TripsPage trips={state.trips} onOpen={(id) => openTrip(id, 'viagens')} />}
-
-      {screen.name === 'viagem' && (
-        <TripPage
-          trip={trip}
-          onStart={() => {
-            if (!trip) return
-            dispatch({ type: 'start-trip', tripId: trip.id })
-            notify('Viagem iniciada. A primeira parada está em rota.')
-          }}
-          onDeliver={(stopId) => {
-            if (!trip) return
-            dispatch({ type: 'deliver-stop', tripId: trip.id, stopId })
-            notify('Entrega registrada.')
-          }}
-          onReport={(stopId) => {
-            if (!trip) return
-            setSheet({ tripId: trip.id, stopId })
-          }}
-          onFinish={() => {
-            if (!trip) return
-            dispatch({ type: 'finish-trip', tripId: trip.id })
-            notify('Viagem encerrada.')
-          }}
-        />
-      )}
-
-      {screen.name === 'checklist' && (
-        <ChecklistPage
-          checks={state.checks}
-          onSet={(id, value) => dispatch({ type: 'set-check', id, value })}
-        />
-      )}
-
-      {screen.name === 'perfil' && (
-        <ProfilePage
-          onLogout={() => {
-            dispatch({ type: 'logout' })
+      <PwaManager />
+      <Shell
+        title={title}
+        active={shellActive}
+        showBack={screen.name === 'viagem' || screen.name === 'iniciar'}
+        onBack={() => {
+          if (screen.name === 'iniciar') {
             setScreen({ name: 'hoje' })
-          }}
-          onReset={() => {
-            dispatch({ type: 'reset' })
-            notify('Demonstração restaurada.')
-            setScreen({ name: 'hoje' })
-          }}
-        />
-      )}
+            return
+          }
+          if (screen.name !== 'viagem') return
+          if (screen.from === 'admin') setScreen({ name: 'admin' })
+          else if (screen.from === 'viagens') setScreen({ name: 'viagens' })
+          else setScreen({ name: 'hoje' })
+        }}
+        onNavigate={(next) => setScreen(next)}
+        role={profile.role}
+        toast={toast}
+      >
+        {screen.name === 'hoje' && (
+          <HomePage
+            onStartFlow={() => setScreen({ name: 'iniciar' })}
+            onOpenTrip={(id) => openTrip(id, 'hoje')}
+            onTrips={() => setScreen({ name: 'viagens' })}
+            onAdmin={profile.role === 'admin' ? () => setScreen({ name: 'admin' }) : undefined}
+          />
+        )}
 
-      {sheet && sheetStop && (
-        <OccurrenceSheet
-          cliente={sheetStop.cliente}
-          onClose={() => setSheet(null)}
-          onSubmit={(motivo, nota) => {
-            dispatch({
-              type: 'report-stop',
-              tripId: sheet.tripId,
-              stopId: sheet.stopId,
-              motivo,
-              nota,
-            })
-            setSheet(null)
-            notify('Ocorrência registrada.')
-          }}
-        />
-      )}
-    </Shell>
+        {screen.name === 'iniciar' && (
+          <StartTripPage
+            onCancel={() => setScreen({ name: 'hoje' })}
+            onStarted={(id) => openTrip(id, 'hoje')}
+          />
+        )}
+
+        {screen.name === 'viagens' && (
+          <TripsPage onOpen={(id) => openTrip(id, 'viagens')} />
+        )}
+
+        {screen.name === 'viagem' && <TripPage tripId={screen.id} />}
+
+        {screen.name === 'admin' && (
+          <AdminPage onOpen={(id) => openTrip(id, 'admin')} />
+        )}
+
+        {screen.name === 'perfil' && (
+          <ProfilePage
+            onLogout={() => {
+              dispatch({ type: 'logout' })
+              setScreen({ name: 'hoje' })
+            }}
+          />
+        )}
+      </Shell>
     </>
   )
 }

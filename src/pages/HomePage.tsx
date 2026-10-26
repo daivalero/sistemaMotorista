@@ -1,117 +1,56 @@
-import {
-  ArrowRight,
-  ClipboardCheck,
-  MapPinned,
-  Route,
-  Truck,
-  UserRound,
-} from 'lucide-react'
+import { ArrowRight, ClipboardList, Play, Route, Truck } from 'lucide-react'
 import { Card } from '../components/Card'
-import { Badge, Progress } from '../components/Ui'
-import { driver, formatLongDate, todayISO } from '../data'
-import { countDone, pickFeatured } from '../logic'
-import type { CheckItem, Trip } from '../types'
+import { formatDateTime, formatLongDate } from '../data'
+import {
+  activeTripForDriver,
+  deliveryCounts,
+  deliveriesOf,
+  expenseTotal,
+  expensesOf,
+} from '../logic'
+import { useStore } from '../store'
 
 type Props = {
-  trips: Trip[]
-  checks: CheckItem[]
-  onOpen: (id: string) => void
-  onStart: (id: string) => void
-  onChecklist: () => void
+  onStartFlow: () => void
+  onOpenTrip: (id: string) => void
   onTrips: () => void
-  onProfile: () => void
+  onAdmin?: () => void
 }
 
-export function HomePage({
-  trips,
-  checks,
-  onOpen,
-  onStart,
-  onChecklist,
-  onTrips,
-  onProfile,
-}: Props) {
-  const today = todayISO()
-  const featured = pickFeatured(trips, today)
-  const todayTrips = trips.filter((trip) => trip.data === today)
-  const others = trips.filter((trip) => trip.id !== featured?.id).slice(0, 4)
-  const pendingChecks = checks.filter((item) => item.ok !== true).length
-  const attentionChecks = checks.filter((item) => item.ok === false).length
-  const doneStops = todayTrips.reduce((sum, trip) => sum + countDone(trip), 0)
-  const totalStops = todayTrips.reduce((sum, trip) => sum + trip.paradas.length, 0)
-  const issues = todayTrips.reduce(
-    (sum, trip) => sum + trip.paradas.filter((stop) => stop.status === 'ocorrencia').length,
-    0,
-  )
-  const checksOk = checks.filter((item) => item.ok === true).length
+export function HomePage({ onStartFlow, onOpenTrip, onTrips, onAdmin }: Props) {
+  const { state } = useStore()
+  const profile = state.session.profile
+  if (!profile) return null
 
-  const quickActions = [
-    {
-      key: 'checklist',
-      label: 'Checklist',
-      description: pendingChecks > 0 ? `${pendingChecks} pendentes` : 'Veículo ok',
-      icon: ClipboardCheck,
-      onClick: onChecklist,
-    },
-    {
-      key: 'viagens',
-      label: 'Viagens',
-      description: 'Rotas liberadas',
-      icon: Route,
-      onClick: onTrips,
-    },
-    {
-      key: 'parada',
-      label: 'Paradas',
-      description: featured ? `${featured.paradas.length} na saída` : 'Sem saída',
-      icon: MapPinned,
-      onClick: () => (featured ? onOpen(featured.id) : onTrips()),
-    },
-    {
-      key: 'perfil',
-      label: 'Perfil',
-      description: driver.placa,
-      icon: UserRound,
-      onClick: onProfile,
-    },
-  ]
+  const active = activeTripForDriver(state, profile.id)
+  const myTrips = state.trips
+    .filter((trip) => trip.driverId === profile.id || profile.role === 'admin')
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+  const awaiting = myTrips.filter((t) => t.status === 'aguardando_conferencia').length
+  const needsFix = myTrips.filter((t) => t.status === 'precisa_correcao').length
 
   return (
     <div className="home-dash">
       <header className="home-hello">
-        <p className="home-hello-label">Olá,</p>
-        <h1 className="home-hello-name">{driver.nome}</h1>
+        <div className="home-brand-row">
+          <p className="home-hello-label">Olá,</p>
+        </div>
+        <h1 className="home-hello-name">{profile.nome}</h1>
         <p className="home-hello-meta">
-          {formatLongDate(today)} · {driver.base}
+          {formatLongDate(new Date().toISOString())} ·{' '}
+          {profile.role === 'admin' ? 'Administração' : 'Motorista agregado'}
         </p>
       </header>
 
-      {pendingChecks > 0 && (
-        <button type="button" className="home-alert" onClick={onChecklist}>
-          <strong>
-            {attentionChecks > 0
-              ? attentionChecks === 1
-                ? '1 item em atenção no checklist'
-                : `${attentionChecks} itens em atenção no checklist`
-              : pendingChecks === 1
-                ? 'Falta 1 item no checklist'
-                : `Faltam ${pendingChecks} itens no checklist`}
-          </strong>
-          <span>Conferir veículo</span>
-        </button>
-      )}
-
-      {featured ? (
+      {active ? (
         <Card
           as="button"
+          type="button"
           interactive
           gradientTop
           padding="lg"
           className="home-hero"
-          type="button"
-          onClick={() =>
-            featured.status === 'agendada' ? onStart(featured.id) : onOpen(featured.id)
-          }
+          onClick={() => onOpenTrip(active.id)}
         >
           <div className="home-hero-top">
             <span className="home-hero-icon" aria-hidden>
@@ -120,41 +59,46 @@ export function HomePage({
             <ArrowRight className="home-hero-arrow" size={18} aria-hidden />
           </div>
           <div className="home-hero-body">
-            <p className="home-section-label">
-              {featured.status === 'em_andamento' ? 'Continuar viagem' : 'Próxima saída'}
-            </p>
+            <p className="home-section-label">Viagem em andamento</p>
             <h2>
-              {featured.codigo}
-              <span>{featured.saida}</span>
+              Desde {formatDateTime(active.startedAt)}
+              <span>KM {active.kmStart}</span>
             </h2>
             <p>
-              {featured.origem} <span aria-hidden="true">→</span> {featured.regiao}
+              {deliveriesOf(state, active.id).length} entregas ·{' '}
+              {formatMoneySafe(expenseTotal(expensesOf(state, active.id)))} em gastos
             </p>
             <div className="home-hero-meta">
-              <Badge status={featured.status} />
-              <span>
-                {countDone(featured)}/{featured.paradas.length} paradas · {featured.km} km
-              </span>
+              <span className="badge badge-em_andamento">Em andamento</span>
+              {active.syncState === 'local' && (
+                <span className="sync-pill">Salvo neste aparelho</span>
+              )}
             </div>
           </div>
-          <span className="home-hero-cta">
-            {featured.status === 'agendada'
-              ? 'Iniciar viagem'
-              : featured.status === 'concluida'
-                ? 'Ver resumo'
-                : 'Abrir viagem'}
-          </span>
+          <span className="home-hero-cta">Continuar viagem</span>
         </Card>
       ) : (
-        <Card padding="lg" className="home-hero home-hero-empty">
-          <span className="home-hero-icon" aria-hidden>
-            <Truck size={22} />
-          </span>
-          <h2>Nenhuma saída pendente</h2>
-          <p>Quando a base liberar a próxima rota, ela aparece aqui.</p>
-          <button type="button" className="btn btn-primary" onClick={onTrips}>
-            Ver viagens
-          </button>
+        <Card
+          as="button"
+          type="button"
+          interactive
+          gradientTop
+          padding="lg"
+          className="home-hero"
+          onClick={onStartFlow}
+        >
+          <div className="home-hero-top">
+            <span className="home-hero-icon" aria-hidden>
+              <Play size={22} />
+            </span>
+            <ArrowRight className="home-hero-arrow" size={18} aria-hidden />
+          </div>
+          <div className="home-hero-body">
+            <p className="home-section-label">Pronto para sair</p>
+            <h2>Iniciar viagem</h2>
+            <p>Informe a quilometragem inicial e o veículo. Entregas e gastos entram depois.</p>
+          </div>
+          <span className="home-hero-cta">Iniciar viagem</span>
         </Card>
       )}
 
@@ -163,132 +107,105 @@ export function HomePage({
           Ações rápidas
         </h2>
         <div className="home-actions">
-          {quickActions.map((action) => {
-            const Icon = action.icon
-            return (
-              <Card
-                key={action.key}
-                as="button"
-                type="button"
-                interactive
-                padding="md"
-                className="home-action"
-                onClick={action.onClick}
-              >
-                <Icon size={18} className="home-action-icon" aria-hidden />
-                <strong>{action.label}</strong>
-                <span>{action.description}</span>
-              </Card>
-            )
-          })}
+          <Card as="button" type="button" interactive padding="md" className="home-action" onClick={onTrips}>
+            <Route size={18} className="home-action-icon" aria-hidden />
+            <strong>Minhas viagens</strong>
+            <span>{myTrips.length} no histórico</span>
+          </Card>
+          {!active && (
+            <Card
+              as="button"
+              type="button"
+              interactive
+              padding="md"
+              className="home-action"
+              onClick={onStartFlow}
+            >
+              <Play size={18} className="home-action-icon" aria-hidden />
+              <strong>Nova viagem</strong>
+              <span>Registrar saída</span>
+            </Card>
+          )}
+          {active && (
+            <Card
+              as="button"
+              type="button"
+              interactive
+              padding="md"
+              className="home-action"
+              onClick={() => onOpenTrip(active.id)}
+            >
+              <ClipboardList size={18} className="home-action-icon" aria-hidden />
+              <strong>Entregas</strong>
+              <span>
+                {deliveryCounts(deliveriesOf(state, active.id)).pendente} pendentes
+              </span>
+            </Card>
+          )}
+          {profile.role === 'admin' && onAdmin && (
+            <Card as="button" type="button" interactive padding="md" className="home-action" onClick={onAdmin}>
+              <ClipboardList size={18} className="home-action-icon" aria-hidden />
+              <strong>Conferência</strong>
+              <span>
+                {awaiting} aguardando · {needsFix} correção
+              </span>
+            </Card>
+          )}
         </div>
       </section>
 
-      <section aria-labelledby="resumo-hoje">
-        <h2 id="resumo-hoje" className="home-section-label">
-          Hoje
-        </h2>
-        <Card padding="md">
-          <ul className="home-summary">
-            <li>
-              <span>Paradas</span>
-              <strong>{totalStops}</strong>
-            </li>
-            <li>
-              <span>Resolvidas</span>
-              <strong>{doneStops}</strong>
-            </li>
-            <li>
-              <span>Ocorrências</span>
-              <strong>{issues}</strong>
-            </li>
-            <li>
-              <span>Checklist</span>
-              <strong>
-                {checksOk}/{checks.length}
-              </strong>
-            </li>
-          </ul>
-          <div className="home-summary-foot">
-            <Progress value={checksOk} max={checks.length} />
-            <button type="button" className="text-btn" onClick={onChecklist}>
-              Abrir checklist
-            </button>
-          </div>
-        </Card>
-      </section>
-
-      {featured && (
-        <section aria-labelledby="paradas-saida">
+      {myTrips.length > 0 && (
+        <section aria-labelledby="recentes">
           <div className="home-section-row">
-            <h2 id="paradas-saida" className="home-section-label">
-              Paradas da saída
-            </h2>
-            <button type="button" className="text-btn" onClick={() => onOpen(featured.id)}>
-              Abrir
-            </button>
-          </div>
-          <Card padding="md">
-            <ol className="home-stops">
-              {featured.paradas.map((stop, index) => (
-                <li key={stop.id} className={stop.status === 'em_rota' ? 'is-now' : undefined}>
-                  <span className="home-stop-index">{index + 1}</span>
-                  <div>
-                    <strong>{stop.cliente}</strong>
-                    <span>
-                      {stop.janela} · {stop.bairro}
-                    </span>
-                  </div>
-                  <Badge status={stop.status} />
-                </li>
-              ))}
-            </ol>
-          </Card>
-        </section>
-      )}
-
-      {others.length > 0 && (
-        <section aria-labelledby="outras-rotas">
-          <div className="home-section-row">
-            <h2 id="outras-rotas" className="home-section-label">
-              Outras rotas
+            <h2 id="recentes" className="home-section-label">
+              Recentes
             </h2>
             <button type="button" className="text-btn" onClick={onTrips}>
-              Todas
+              Ver todas
             </button>
           </div>
           <Card padding="md">
             <ul className="home-routes">
-              {others.map((trip) => (
-                <li key={trip.id}>
-                  <button type="button" onClick={() => onOpen(trip.id)}>
-                    <span>
-                      <strong>{trip.codigo}</strong>
-                      <small>
-                        {trip.saida} · {trip.regiao}
-                      </small>
-                    </span>
-                    <Badge status={trip.status} />
-                  </button>
-                </li>
-              ))}
+              {myTrips.slice(0, 5).map((trip) => {
+                const dels = deliveriesOf(state, trip.id)
+                return (
+                  <li key={trip.id}>
+                    <button type="button" onClick={() => onOpenTrip(trip.id)}>
+                      <span>
+                        <strong>{formatDateTime(trip.startedAt)}</strong>
+                        <small>
+                          {dels.length} entregas · KM {trip.kmStart}
+                          {trip.kmEnd != null ? ` → ${trip.kmEnd}` : ''}
+                        </small>
+                      </span>
+                      <span className={`badge badge-${trip.status}`}>{statusLabel(trip.status)}</span>
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </Card>
         </section>
       )}
-
-      <section className="home-stats-desktop" aria-label="Resumo operacional">
-        {[
-          { label: 'Paradas hoje', value: String(totalStops) },
-          { label: 'Resolvidas', value: String(doneStops) },
-          { label: 'Ocorrências', value: String(issues) },
-        ].map((stat) => (
-          <Card key={stat.label} padding="md">
-            <p className="home-stat-label">{stat.label}</p>
-            <p className="home-stat-value">{stat.value}</p>
-          </Card>
-        ))}
-      </section>
     </div>
   )
+}
+
+function formatMoneySafe(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function statusLabel(status: string) {
+  switch (status) {
+    case 'em_andamento':
+      return 'Em andamento'
+    case 'aguardando_conferencia':
+      return 'Conferência'
+    case 'precisa_correcao':
+      return 'Correção'
+    case 'concluida':
+      return 'Concluída'
+    default:
+      return status
+  }
 }

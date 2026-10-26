@@ -1,7 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowRight, ClipboardCheck, MapPinned, Smartphone } from 'lucide-react'
-import { driver } from '../data'
+import { demoCredentials } from '../data'
 import { Logo } from '../components/Logo'
+import { ensureDriverSeed } from '../services/trips'
+import type { Profile } from '../types'
+import { useStore } from '../store'
+import { supabaseConfigured } from '../lib/supabase'
 
 type Props = {
   error: string
@@ -11,28 +15,38 @@ type Props = {
 const benefits = [
   {
     icon: MapPinned,
-    title: 'Paradas na ordem',
-    description: 'A janela do dia, clara no celular e na base.',
+    title: 'Entregas na viagem',
+    description: 'Registre clientes e comprovantes no percurso.',
   },
   {
     icon: ClipboardCheck,
-    title: 'Checklist do veículo',
-    description: 'Confira antes de sair e registre atenção.',
+    title: 'Gastos com categoria',
+    description: 'Combustível, pedágio e mais, com recibo.',
   },
   {
     icon: Smartphone,
-    title: 'Feito para o caminhão',
-    description: 'Interface rápida, instalável como PWA.',
+    title: 'Feito para o celular',
+    description: 'Poucos toques, mesmo com internet instável.',
   },
 ]
 
 export function LoginPage({ error, onSubmit }: Props) {
+  const { state, dispatch } = useStore()
   const [matricula, setMatricula] = useState('')
   const [senha, setSenha] = useState('')
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault()
     onSubmit(matricula.trim(), senha)
+  }
+
+  const enterAs = (profile: Profile) => {
+    const hasVehicles = state.vehicles.some((v) => v.driverId === profile.id)
+    if (!hasVehicles && profile.role === 'motorista') {
+      const seed = ensureDriverSeed(profile)
+      seed.vehicles.forEach((vehicle) => dispatch({ type: 'upsert-vehicle', vehicle }))
+    }
+    onSubmit(profile.matricula, profile.matricula === '9001' ? 'admin' : 'rota')
   }
 
   return (
@@ -43,13 +57,13 @@ export function LoginPage({ error, onSubmit }: Props) {
       <section className="login-hero">
         <Logo variant="full" />
         <h1 className="hero-title">
-          A rota do dia,
+          Viagens com
           <br />
-          na palma da mão
+          entregas e gastos
         </h1>
         <p className="hero-copy">
-          Saídas, paradas, checklist e ocorrências no mesmo lugar — feito para o motorista da
-          Transportadora Braulio.
+          Inicie a viagem, registre entregas e despesas, finalize com quilometragem e envie para
+          conferência.
         </p>
         <ul className="login-benefits">
           {benefits.map((item) => {
@@ -73,14 +87,18 @@ export function LoginPage({ error, onSubmit }: Props) {
         <div className="login-stack">
           <div className="login-mobile-brand">
             <Logo variant="full" />
-            <p className="muted">Entre para ver as rotas de hoje</p>
+            <p className="muted">Transportadora Braulio · sistema do motorista</p>
           </div>
 
           <form className="login-card" onSubmit={submit}>
             <span className="gradient-line" aria-hidden />
             <div className="login-card-head">
               <h1>Entrar</h1>
-              <p className="muted">Use a matrícula da base.</p>
+              <p className="muted">
+                {supabaseConfigured
+                  ? 'Use suas credenciais da base.'
+                  : 'Modo local: registros ficam neste aparelho até configurar o Supabase.'}
+              </p>
             </div>
 
             <label className="field">
@@ -117,16 +135,22 @@ export function LoginPage({ error, onSubmit }: Props) {
             <button
               type="button"
               className="btn btn-ghost btn-block"
-              onClick={() => onSubmit(driver.matricula, driver.senha)}
+              onClick={() => enterAs(demoCredentials.motorista.profile)}
             >
-              Entrar com a demonstração
+              Entrar como motorista (demo)
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-block"
+              onClick={() => enterAs(demoCredentials.admin.profile)}
+            >
+              Entrar como admin (demo)
             </button>
             <p className="fine">
-              Demonstração: matrícula {driver.matricula}, senha {driver.senha}.
+              Motorista {demoCredentials.motorista.matricula}/{demoCredentials.motorista.senha} ·
+              Admin {demoCredentials.admin.matricula}/{demoCredentials.admin.senha}
             </p>
           </form>
-
-          <p className="fine">Sistema interno · Transportadora Braulio</p>
         </div>
       </section>
     </main>

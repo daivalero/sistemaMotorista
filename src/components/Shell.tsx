@@ -1,25 +1,18 @@
 import type { ReactNode } from 'react'
-import { driver } from '../data'
-import type { Screen } from '../types'
+import type { AppRole, Screen } from '../types'
 import { Icon } from './Icons'
 import { Logo } from './Logo'
+import { useStore } from '../store'
 
-const nav = [
-  { name: 'hoje', label: 'Hoje', icon: 'hoje' },
-  { name: 'viagens', label: 'Viagens', icon: 'viagens' },
-  { name: 'checklist', label: 'Checklist', icon: 'check' },
-  { name: 'perfil', label: 'Perfil', icon: 'perfil' },
-] as const
-
-type NavName = (typeof nav)[number]['name']
+type NavName = 'hoje' | 'viagens' | 'admin' | 'perfil'
 
 type Props = {
   title: string
-  active: NavName
+  active: NavName | 'iniciar'
   showBack?: boolean
   onBack?: () => void
   onNavigate: (screen: Screen) => void
-  attention: number
+  role: AppRole
   toast: string | null
   children: ReactNode
 }
@@ -30,10 +23,23 @@ export function Shell({
   showBack,
   onBack,
   onNavigate,
-  attention,
+  role,
   toast,
   children,
 }: Props) {
+  const { state } = useStore()
+  const profile = state.session.profile
+  const nav = [
+    { name: 'hoje' as const, label: 'Hoje', icon: 'hoje' as const },
+    { name: 'viagens' as const, label: 'Viagens', icon: 'viagens' as const },
+    ...(role === 'admin'
+      ? [{ name: 'admin' as const, label: 'Conferir', icon: 'check' as const }]
+      : []),
+    { name: 'perfil' as const, label: 'Perfil', icon: 'perfil' as const },
+  ]
+
+  const current = active === 'iniciar' ? 'hoje' : active
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -46,38 +52,44 @@ export function Shell({
             <button
               key={item.name}
               type="button"
-              className={item.name === active ? 'side-link active' : 'side-link'}
-              aria-current={item.name === active ? 'page' : undefined}
+              className={item.name === current ? 'side-link active' : 'side-link'}
+              aria-current={item.name === current ? 'page' : undefined}
               onClick={() => onNavigate({ name: item.name })}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
-              {item.name === 'checklist' && attention > 0 && <em className="count">{attention}</em>}
             </button>
           ))}
         </nav>
-        <div className="side-user">
-          <span className="avatar" aria-hidden="true">
-            {driver.iniciais}
-          </span>
-          <div>
-            <strong>{driver.nome}</strong>
-            <span>
-              {driver.placa} · {driver.base}
+        {profile && (
+          <div className="side-user">
+            <span className="avatar" aria-hidden="true">
+              {profile.nome
+                .split(' ')
+                .slice(0, 2)
+                .map((p) => p[0])
+                .join('')
+                .toUpperCase()}
             </span>
+            <div>
+              <strong>{profile.nome}</strong>
+              <span>
+                {profile.matricula} · {profile.role}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </aside>
 
       <div className="main">
-        <header className={active === 'hoje' && !showBack ? 'topbar is-home' : 'topbar'}>
+        <header className="topbar">
           <div className="topbar-lead">
             {showBack && (
               <button type="button" className="icon-btn" onClick={onBack} aria-label="Voltar">
                 <Icon name="back" />
               </button>
             )}
-            {active === 'hoje' && !showBack ? (
+            {!showBack && current === 'hoje' ? (
               <Logo variant="compact" />
             ) : (
               <h1 className="top-title">{title}</h1>
@@ -89,7 +101,14 @@ export function Shell({
             onClick={() => onNavigate({ name: 'perfil' })}
             aria-label="Abrir perfil"
           >
-            {driver.iniciais}
+            {profile
+              ? profile.nome
+                  .split(' ')
+                  .slice(0, 2)
+                  .map((p) => p[0])
+                  .join('')
+                  .toUpperCase()
+              : '?'}
           </button>
         </header>
         <div className="content">
@@ -109,13 +128,12 @@ export function Shell({
           <button
             key={item.name}
             type="button"
-            className={item.name === active ? 'tab active' : 'tab'}
-            aria-current={item.name === active ? 'page' : undefined}
+            className={item.name === current ? 'tab active' : 'tab'}
+            aria-current={item.name === current ? 'page' : undefined}
             onClick={() => onNavigate({ name: item.name })}
           >
             <span className="tab-icon">
               <Icon name={item.icon} />
-              {item.name === 'checklist' && attention > 0 && <i className="dot" />}
             </span>
             {item.label}
           </button>

@@ -1,75 +1,68 @@
-import { driver } from '../data'
+import { supabaseConfigured } from '../lib/supabase'
+import { useStore } from '../store'
 
 type Props = {
   onLogout: () => void
-  onReset: () => void
 }
 
-export function ProfilePage({ onLogout, onReset }: Props) {
+export function ProfilePage({ onLogout }: Props) {
+  const { state } = useStore()
+  const profile = state.session.profile
+  if (!profile) return null
+
+  const vehicles = state.vehicles.filter((v) => v.driverId === profile.id)
+
   return (
     <div className="profile-grid">
       <section className="panel identity">
         <span className="avatar large" aria-hidden="true">
-          {driver.iniciais}
+          {profile.nome
+            .split(' ')
+            .slice(0, 2)
+            .map((p) => p[0])
+            .join('')
+            .toUpperCase()}
         </span>
         <div>
-          <h2>{driver.nome}</h2>
+          <h2>{profile.nome}</h2>
           <p className="muted">
-            Matrícula {driver.matricula} · {driver.base}
+            Matrícula {profile.matricula} · {profile.role}
           </p>
-          <p>{driver.telefone}</p>
+          {profile.telefone && <p>{profile.telefone}</p>}
         </div>
       </section>
 
-      <section className="panel">
-        <h2>Documentos</h2>
-        <dl className="spec">
-          <div>
-            <dt>CNH</dt>
-            <dd>{driver.cnh}</dd>
-          </div>
-          <div>
-            <dt>Categoria</dt>
-            <dd>{driver.categoria}</dd>
-          </div>
-          <div>
-            <dt>Validade</dt>
-            <dd>{driver.validade}</dd>
-          </div>
-        </dl>
-      </section>
+      {vehicles.length > 0 && (
+        <section className="panel">
+          <h2>Veículos associados</h2>
+          <dl className="spec">
+            {vehicles.map((vehicle) => (
+              <div key={vehicle.id}>
+                <dt>{vehicle.plate}</dt>
+                <dd>
+                  {vehicle.model}
+                  {vehicle.year ? ` · ${vehicle.year}` : ''}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       <section className="panel">
-        <h2>Veículo da rota</h2>
-        <dl className="spec">
-          <div>
-            <dt>Modelo</dt>
-            <dd>{driver.veiculo}</dd>
-          </div>
-          <div>
-            <dt>Placa</dt>
-            <dd>{driver.placa}</dd>
-          </div>
-          <div>
-            <dt>Ano</dt>
-            <dd>{driver.ano}</dd>
-          </div>
-          <div>
-            <dt>Capacidade</dt>
-            <dd>{driver.capacidade}</dd>
-          </div>
-        </dl>
+        <h2>Persistência</h2>
+        <p className="muted">
+          {supabaseConfigured
+            ? 'Supabase configurado. Os envios usam o servidor quando houver conexão.'
+            : 'Supabase ainda não configurado. Os registros ficam neste aparelho (não inventamos viagens de demonstração).'}
+        </p>
       </section>
 
       <section className="panel actions-panel">
-        <h2>Conta</h2>
-        <p className="muted">A demonstração guarda as rotas neste aparelho. Restaurar volta ao dia de exemplo.</p>
+        <h2>Sessão</h2>
         <div className="actions">
-          <button type="button" className="btn btn-ghost" onClick={onReset}>
-            Restaurar demonstração
-          </button>
           <button type="button" className="btn btn-primary" onClick={onLogout}>
-            Sair da conta
+            Sair
           </button>
         </div>
       </section>

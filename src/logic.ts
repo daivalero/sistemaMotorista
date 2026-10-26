@@ -1,91 +1,99 @@
-import { createInitialState } from './data'
-import type { Action, AppState, Trip } from './types'
+import type { Action, AppState, Delivery, Expense, Trip } from './types'
 
-export function countDone(trip: Trip) {
-  return trip.paradas.filter((stop) => stop.status === 'entregue' || stop.status === 'ocorrencia').length
+export function tripDistance(trip: Trip) {
+  if (trip.kmEnd == null) return undefined
+  return Math.max(0, Number((trip.kmEnd - trip.kmStart).toFixed(1)))
 }
 
-export function tripOpen(trip: Trip) {
-  return trip.paradas.some((stop) => stop.status === 'pendente' || stop.status === 'em_rota')
+export function deliveriesOf(state: AppState, tripId: string) {
+  return state.deliveries.filter((item) => item.tripId === tripId)
 }
 
-export function canFinish(trip: Trip) {
-  return trip.status === 'em_andamento' && !tripOpen(trip)
+export function expensesOf(state: AppState, tripId: string) {
+  return state.expenses.filter((item) => item.tripId === tripId)
 }
 
-function promoteNext(trip: Trip): Trip {
-  const hasActive = trip.paradas.some((stop) => stop.status === 'em_rota')
-  if (hasActive) return trip
-  let promoted = false
-  const paradas = trip.paradas.map((stop) => {
-    if (!promoted && stop.status === 'pendente') {
-      promoted = true
-      return { ...stop, status: 'em_rota' as const }
-    }
-    return stop
-  })
-  return { ...trip, paradas }
+export function expenseTotal(expenses: Expense[]) {
+  return expenses.reduce((sum, item) => sum + item.amount, 0)
 }
 
-function patchTrip(state: AppState, tripId: string, update: (trip: Trip) => Trip): AppState {
+export function expenseTotalsByCategory(expenses: Expense[]) {
+  return expenses.reduce<Record<string, number>>((acc, item) => {
+    acc[item.category] = (acc[item.category] ?? 0) + item.amount
+    return acc
+  }, {})
+}
+
+export function deliveryCounts(deliveries: Delivery[]) {
   return {
-    ...state,
-    trips: state.trips.map((trip) => (trip.id === tripId ? update(trip) : trip)),
+    total: deliveries.length,
+    pendente: deliveries.filter((d) => d.status === 'pendente').length,
+    entregue: deliveries.filter((d) => d.status === 'entregue').length,
+    ocorrencia: deliveries.filter((d) => d.status === 'ocorrencia').length,
+    proofMissing: deliveries.filter(
+      (d) => d.proofRequired && !d.proofDataUrl && d.status === 'entregue',
+    ).length,
   }
+}
+
+export function expenseProofMissing(expenses: Expense[]) {
+  return expenses.filter((e) => e.proofPending || (!e.proofDataUrl && e.category === 'combustivel'))
+    .length
+}
+
+export function canEditTrip(trip: Trip) {
+  return trip.status === 'em_andamento' || trip.status === 'precisa_correcao'
+}
+
+export function activeTripForDriver(state: AppState, driverId: string) {
+  return state.trips.find(
+    (trip) => trip.driverId === driverId && trip.status === 'em_andamento',
+  )
+}
+
+function upsert<T extends { id: string }>(list: T[], item: T) {
+  const idx = list.findIndex((row) => row.id === item.id)
+  if (idx === -1) return [...list, item]
+  const next = list.slice()
+  next[idx] = item
+  return next
 }
 
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case 'hydrate':
+    case 'replace-all':
+      return action.state
     case 'login':
-      return { ...state, loggedIn: true }
-    case 'logout':
-      return { ...state, loggedIn: false }
-    case 'reset':
-      return { ...createInitialState(), loggedIn: true }
-    case 'set-check':
       return {
         ...state,
-        checks: state.checks.map((item) =>
-          item.id === action.id ? { ...item, ok: action.value } : item,
-        ),
+        session: { loggedIn: true, profile: action.profile },
       }
-    case 'start-trip':
-      return patchTrip(state, action.tripId, (trip) => {
-        if (trip.status === 'concluida') return trip
-        return promoteNext({ ...trip, status: 'em_andamento' })
-      })
-    case 'deliver-stop':
-      return patchTrip(state, action.tripId, (trip) => {
-        const paradas = trip.paradas.map((stop) =>
-          stop.id === action.stopId
-            ? { ...stop, status: 'entregue' as const, motivo: undefined, nota: undefined }
-            : stop,
-        )
-        return promoteNext({ ...trip, status: 'em_andamento', paradas })
-      })
-    case 'report-stop':
-      return patchTrip(state, action.tripId, (trip) => {
-        const paradas = trip.paradas.map((stop) =>
-          stop.id === action.stopId
-            ? { ...stop, status: 'ocorrencia' as const, motivo: action.motivo, nota: action.nota }
-            : stop,
-        )
-        return promoteNext({ ...trip, status: 'em_andamento', paradas })
-      })
-    case 'finish-trip':
-      return patchTrip(state, action.tripId, (trip) => {
-        if (tripOpen(trip)) return trip
-        return { ...trip, status: 'concluida' }
-      })
+    case 'logout':
+      return {
+        ...state,
+        session: { loggedIn: false, profile: null },
+      }
+    case 'upsert-vehicle':
+      return { ...state, vehicles: upsert(state.vehicles, action.vehicle) }
+    case 'upsert-client':
+      return { ...state, clients: upsert(state.clients, action.client) }
+    case 'upsert-trip':
+      return { ...state, trips: upsert(state.trips, action.trip) }
+    case 'upsert-delivery':
+      return { ...state, deliveries: upsert(state.deliveries, action.delivery) }
+    case 'upsert-expense': {
+      const byRequest = state.expenses.find(
+        (item) => item.clientRequestId === action.expense.clientRequestId,
+      )
+      if (byRequest && byRequest.id !== action.expense.id) {
+        return state
+      }
+      return { ...state, expenses: upsert(state.expenses, action.expense) }
+    }
+    case 'add-event':
+      return { ...state, events: [...state.events, action.event] }
     default:
       return state
   }
-}
-
-export function pickFeatured(trips: Trip[], today: string) {
-  const active = trips.find((trip) => trip.status === 'em_andamento')
-  if (active) return active
-  return trips
-    .filter((trip) => trip.status === 'agendada' && trip.data >= today)
-    .sort((a, b) => (a.data + a.saida).localeCompare(b.data + b.saida))[0]
 }
