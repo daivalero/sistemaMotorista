@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Card } from '../components/Card'
 import { formatDateTime, formatMoney } from '../data'
-import { attachmentsOf, expenseTotal, expensesOf } from '../logic'
+import { attachmentsOf, deliveriesOf, expenseTotal, expensesOf } from '../logic'
 import { approveTrip, requestTripCorrection } from '../services/trips'
 import { useStore } from '../store'
 import type { Expense } from '../types'
@@ -33,6 +33,7 @@ export function AdminPage({ onOpen }: Props) {
   const vehicle = selected ? state.vehicles.find((v) => v.id === selected.vehicleId) : null
   const expenses = selected ? expensesOf(state, selected.id) : []
   const attachments = selected ? attachmentsOf(state, selected.id) : []
+  const deliveries = selected ? deliveriesOf(state, selected.id) : []
   const events = selected
     ? state.events
         .filter((e) => e.tripId === selected.id)
@@ -131,7 +132,31 @@ export function AdminPage({ onOpen }: Props) {
               {selected.distanceKm ?? '—'} km)
             </p>
             {selected.relato && <p style={{ whiteSpace: 'pre-wrap' }}>{selected.relato}</p>}
-            <p>Despesas: {formatMoney(expenseTotal(expenses))} · Anexos: {attachments.length}</p>
+            <p>
+              Entregas: {deliveries.length} · Despesas: {formatMoney(expenseTotal(expenses))} ·
+              Anexos: {attachments.length}
+            </p>
+
+            {deliveries.length > 0 && (
+              <>
+                <h3 className="subhead">Entregas</h3>
+                <ul className="home-routes">
+                  {deliveries.map((item) => (
+                    <li key={item.id}>
+                      <button type="button">
+                        <span>
+                          <strong>{item.clientName}</strong>
+                          <small>
+                            {item.address || 'Sem endereço'} · {item.status}
+                          </small>
+                        </span>
+                        <span className={`badge badge-${item.status}`}>{item.status}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
             <h3 className="subhead">Despesas</h3>
             <ul className="home-routes">

@@ -14,6 +14,8 @@ export type ExpenseCategory =
   | 'manutencao'
   | 'outros'
 
+export type DeliveryStatus = 'pendente' | 'entregue' | 'ocorrencia'
+
 export type ExpenseReview = 'pendente' | 'aprovada' | 'rejeitada'
 
 export type SyncState = 'local' | 'enviando' | 'sincronizado' | 'erro'
@@ -49,6 +51,24 @@ export type TripAttachment = {
   description?: string
   proofDataUrl?: string
   proofPending: boolean
+  createdAt: string
+  updatedAt: string
+  clientRequestId: string
+  syncState: SyncState
+  syncError?: string
+}
+
+export type Delivery = {
+  id: string
+  tripId: string
+  clientName: string
+  address?: string
+  orderRef?: string
+  notes?: string
+  status: DeliveryStatus
+  proofDataUrl?: string
+  proofPending: boolean
+  completedAt?: string
   createdAt: string
   updatedAt: string
   clientRequestId: string
@@ -110,6 +130,7 @@ export type AppState = {
   }
   vehicles: Vehicle[]
   trips: Trip[]
+  deliveries: Delivery[]
   expenses: Expense[]
   attachments: TripAttachment[]
   events: TripEvent[]
@@ -121,6 +142,8 @@ export type Action =
   | { type: 'logout' }
   | { type: 'upsert-vehicle'; vehicle: Vehicle }
   | { type: 'upsert-trip'; trip: Trip }
+  | { type: 'upsert-delivery'; delivery: Delivery }
+  | { type: 'remove-delivery'; id: string }
   | { type: 'upsert-expense'; expense: Expense }
   | { type: 'remove-expense'; id: string }
   | { type: 'upsert-attachment'; attachment: TripAttachment }

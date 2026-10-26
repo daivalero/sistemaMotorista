@@ -1,6 +1,8 @@
 import { createId } from '../lib/id'
 import { supabaseConfigured } from '../lib/supabase'
 import type {
+  Delivery,
+  DeliveryStatus,
   Expense,
   ExpenseCategory,
   Profile,
@@ -64,6 +66,19 @@ export type TripFormAttachment = {
   id?: string
   clientRequestId: string
   description: string
+  proofDataUrl?: string
+  proofPending: boolean
+}
+
+export type TripFormDelivery = {
+  localKey: string
+  id?: string
+  clientRequestId: string
+  clientName: string
+  address: string
+  orderRef: string
+  notes: string
+  status: DeliveryStatus
   proofDataUrl?: string
   proofPending: boolean
 }
@@ -147,6 +162,27 @@ export function attachmentFromForm(
     description: row.description.trim() || undefined,
     proofDataUrl: row.proofDataUrl,
     proofPending: row.proofPending || !row.proofDataUrl,
+    createdAt: stamp,
+    updatedAt: stamp,
+    clientRequestId: row.clientRequestId,
+    syncState: supabaseConfigured ? 'enviando' : 'local',
+  }
+}
+
+export function deliveryFromForm(tripId: string, row: TripFormDelivery): Delivery {
+  const stamp = nowIso()
+  const status = row.status
+  return {
+    id: row.id ?? createId('del'),
+    tripId,
+    clientName: row.clientName.trim() || 'Cliente',
+    address: row.address.trim() || undefined,
+    orderRef: row.orderRef.trim() || undefined,
+    notes: row.notes.trim() || undefined,
+    status,
+    proofDataUrl: row.proofDataUrl,
+    proofPending: row.proofPending || (status === 'entregue' && !row.proofDataUrl),
+    completedAt: status === 'entregue' ? stamp : undefined,
     createdAt: stamp,
     updatedAt: stamp,
     clientRequestId: row.clientRequestId,

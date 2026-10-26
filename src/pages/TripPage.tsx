@@ -3,6 +3,7 @@ import { formatDateTime, formatMoney } from '../data'
 import {
   attachmentsOf,
   canEditTrip,
+  deliveriesOf,
   expenseTotal,
   expenseTotalsByCategory,
   expensesOf,
@@ -30,9 +31,10 @@ export function TripPage({ tripId, onEdit }: Props) {
   const vehicle = state.vehicles.find((item) => item.id === trip?.vehicleId)
   const expenses = expensesOf(state, tripId)
   const attachments = attachmentsOf(state, tripId)
+  const deliveries = deliveriesOf(state, tripId)
   const byCategory = expenseTotalsByCategory(expenses)
   const editable = trip ? canEditTrip(trip) : false
-  const pending = pendingProofs(expenses, attachments)
+  const pending = pendingProofs(expenses, attachments, deliveries)
 
   if (!trip) {
     return (
@@ -100,6 +102,37 @@ export function TripPage({ tripId, onEdit }: Props) {
           <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{trip.relato}</p>
         </Card>
       )}
+
+      <Card padding="md">
+        <h2 className="form-section-title">Clientes e entregas</h2>
+        {deliveries.length === 0 ? (
+          <p className="muted">Nenhuma entrega neste registro.</p>
+        ) : (
+          <ul className="home-routes">
+            {deliveries.map((item) => (
+              <li key={item.id}>
+                <button type="button">
+                  <span>
+                    <strong>{item.clientName}</strong>
+                    <small>
+                      {item.address || 'Sem endereço'} · {item.status}
+                      {item.proofPending || !item.proofDataUrl
+                        ? item.status === 'entregue'
+                          ? ' · comprovante pendente'
+                          : ''
+                        : ' · comprovante ok'}
+                    </small>
+                  </span>
+                  <span className={`badge badge-${item.status}`}>{item.status}</span>
+                </button>
+                {item.proofDataUrl && (
+                  <img className="proof-thumb" src={item.proofDataUrl} alt={`Canhoto ${item.clientName}`} />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <Card padding="md">
         <h2 className="form-section-title">Gastos</h2>
