@@ -99,7 +99,7 @@ export function App() {
 
   return (
     <>
-      <PwaManager />
+      <PwaManager hideInstall={screen.name === 'registrar'} />
       <Shell
         title={screen.name === 'viagem' ? 'Viagem' : titles[screen.name]}
         active={shellActive}

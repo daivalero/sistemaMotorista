@@ -22,7 +22,12 @@ function isIos() {
   )
 }
 
-export function PwaManager() {
+type Props = {
+  /** Oculta o banner de instalação (ex.: durante o formulário de viagem). */
+  hideInstall?: boolean
+}
+
+export function PwaManager({ hideInstall = false }: Props) {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null)
   const [showInstall, setShowInstall] = useState(false)
@@ -74,7 +79,11 @@ export function PwaManager() {
   }
 
   const shouldShowInstall =
-    showInstall && !dismissed && !isStandalone() && (installEvent || isIos())
+    showInstall &&
+    !hideInstall &&
+    !dismissed &&
+    !isStandalone() &&
+    (installEvent || isIos())
 
   return (
     <>

@@ -1,8 +1,12 @@
-import type { Action, AppState, Expense, Trip, TripAttachment } from './types'
+import type { Action, AppState, Delivery, Expense, Trip, TripAttachment } from './types'
 
 export function tripDistance(trip: Trip) {
   if (trip.kmStart == null || trip.kmEnd == null) return undefined
   return Math.max(0, Number((trip.kmEnd - trip.kmStart).toFixed(1)))
+}
+
+export function deliveriesOf(state: AppState, tripId: string) {
+  return state.deliveries.filter((item) => item.tripId === tripId)
 }
 
 export function expensesOf(state: AppState, tripId: string) {
@@ -28,10 +32,17 @@ export function canEditTrip(trip: Trip) {
   return trip.status === 'rascunho' || trip.status === 'em_andamento' || trip.status === 'precisa_correcao'
 }
 
-export function pendingProofs(expenses: Expense[], attachments: TripAttachment[]) {
+export function pendingProofs(
+  expenses: Expense[],
+  attachments: TripAttachment[],
+  deliveries: Delivery[] = [],
+) {
   const expensePending = expenses.filter((e) => e.proofPending || !e.proofDataUrl).length
   const attachmentPending = attachments.filter((a) => a.proofPending || !a.proofDataUrl).length
-  return expensePending + attachmentPending
+  const deliveryPending = deliveries.filter(
+    (d) => d.status === 'entregue' && (d.proofPending || !d.proofDataUrl),
+  ).length
+  return expensePending + attachmentPending + deliveryPending
 }
 
 function upsert<T extends { id: string }>(list: T[], item: T) {
@@ -60,6 +71,16 @@ export function reducer(state: AppState, action: Action): AppState {
       if (byRequest) return state
       return { ...state, trips: upsert(state.trips, action.trip) }
     }
+    case 'upsert-delivery': {
+      const byRequest = state.deliveries.find(
+        (item) =>
+          item.clientRequestId === action.delivery.clientRequestId && item.id !== action.delivery.id,
+      )
+      if (byRequest) return state
+      return { ...state, deliveries: upsert(state.deliveries, action.delivery) }
+    }
+    case 'remove-delivery':
+      return { ...state, deliveries: state.deliveries.filter((item) => item.id !== action.id) }
     case 'upsert-expense': {
       const byRequest = state.expenses.find(
         (item) => item.clientRequestId === action.expense.clientRequestId && item.id !== action.expense.id,

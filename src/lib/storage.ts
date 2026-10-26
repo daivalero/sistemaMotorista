@@ -1,12 +1,13 @@
 import type { AppState } from '../types'
 
-export const STORAGE_KEY = 'braulio-viagens-v3'
+export const STORAGE_KEY = 'braulio-viagens-v4'
 
 export function emptyState(): AppState {
   return {
     session: { loggedIn: false, profile: null },
     vehicles: [],
     trips: [],
+    deliveries: [],
     expenses: [],
     attachments: [],
     events: [],
@@ -18,11 +19,10 @@ export function loadState(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) {
       // migrate from v2 if present
-      const legacy = localStorage.getItem('braulio-viagens-v2')
+      const legacy =
+      localStorage.getItem('braulio-viagens-v3') || localStorage.getItem('braulio-viagens-v2')
       if (!legacy) return emptyState()
       const parsed = JSON.parse(legacy) as Partial<AppState> & {
-        deliveries?: unknown
-        clients?: unknown
         trips?: Array<Record<string, unknown>>
       }
       return normalizeLoaded(parsed)
@@ -67,6 +67,7 @@ function normalizeLoaded(parsed: Partial<AppState> & { trips?: Array<Record<stri
     },
     vehicles: parsed.vehicles ?? [],
     trips,
+    deliveries: parsed.deliveries ?? [],
     expenses: parsed.expenses ?? [],
     attachments: parsed.attachments ?? [],
     events: parsed.events ?? [],
