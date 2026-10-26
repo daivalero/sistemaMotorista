@@ -2108,3 +2108,40 @@ select {
     align-items: start;
   }
 }
+
+.form-section-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.form-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.nested-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-elevated);
+}
+
+.badge-rascunho {
+  background: var(--bg-elevated);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+
+.register-form .ticket-actions {
+  margin-top: 12px;
+}
+
+@media (max-width: 420px) {
+  .form-two {
+    grid-template-columns: 1fr;
+  }
+}

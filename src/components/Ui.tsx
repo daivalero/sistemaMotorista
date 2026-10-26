@@ -1,23 +1,15 @@
-import type { DeliveryStatus, TripStatus } from '../types'
+import type { TripStatus } from '../types'
 
 const tripLabels: Record<TripStatus, string> = {
-  em_andamento: 'Em andamento',
-  aguardando_conferencia: 'Conferência',
+  rascunho: 'Rascunho',
+  em_andamento: 'Rascunho',
+  aguardando_conferencia: 'Enviado',
   precisa_correcao: 'Correção',
   concluida: 'Concluída',
 }
 
-const deliveryLabels: Record<DeliveryStatus, string> = {
-  pendente: 'Pendente',
-  entregue: 'Entregue',
-  ocorrencia: 'Ocorrência',
-}
-
-export function Badge({ status }: { status: TripStatus | DeliveryStatus | string }) {
-  const label =
-    (tripLabels as Record<string, string>)[status] ??
-    (deliveryLabels as Record<string, string>)[status] ??
-    status
+export function Badge({ status }: { status: TripStatus | string }) {
+  const label = (tripLabels as Record<string, string>)[status] ?? status
   return <span className={`badge badge-${status}`}>{label}</span>
 }
 

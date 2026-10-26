@@ -7,7 +7,7 @@ import { AdminPage } from './pages/AdminPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { StartTripPage } from './pages/StartTripPage'
+import { RegisterTripPage } from './pages/RegisterTripPage'
 import { TripPage } from './pages/TripPage'
 import { TripsPage } from './pages/TripsPage'
 import { ensureDriverSeed } from './services/trips'
@@ -16,11 +16,11 @@ import type { Screen } from './types'
 
 const titles: Record<Screen['name'], string> = {
   hoje: 'Hoje',
-  viagens: 'Minhas viagens',
+  viagens: 'Meus registros',
+  registrar: 'Registrar viagem',
   viagem: 'Viagem',
   perfil: 'Perfil',
   admin: 'Conferência',
-  iniciar: 'Iniciar viagem',
 }
 
 export function App() {
@@ -29,9 +29,8 @@ export function App() {
   const [loginError, setLoginError] = useState('')
 
   useEffect(() => {
-    const title = titles[screen.name]
     document.title = state.session.loggedIn
-      ? `${title} · Transportadora Braulio`
+      ? `${titles[screen.name]} · Transportadora Braulio`
       : 'Entrar · Transportadora Braulio'
   }, [screen, state.session.loggedIn])
 
@@ -91,11 +90,9 @@ export function App() {
         : screen.from === 'viagens'
           ? 'viagens'
           : 'hoje'
-      : screen.name === 'iniciar'
+      : screen.name === 'registrar'
         ? 'hoje'
         : screen.name
-
-  const title = screen.name === 'viagem' ? 'Viagem' : titles[screen.name]
 
   const openTrip = (id: string, from: 'hoje' | 'viagens' | 'admin') =>
     setScreen({ name: 'viagem', id, from })
@@ -104,11 +101,11 @@ export function App() {
     <>
       <PwaManager />
       <Shell
-        title={title}
+        title={screen.name === 'viagem' ? 'Viagem' : titles[screen.name]}
         active={shellActive}
-        showBack={screen.name === 'viagem' || screen.name === 'iniciar'}
+        showBack={screen.name === 'viagem' || screen.name === 'registrar'}
         onBack={() => {
-          if (screen.name === 'iniciar') {
+          if (screen.name === 'registrar') {
             setScreen({ name: 'hoje' })
             return
           }
@@ -123,17 +120,18 @@ export function App() {
       >
         {screen.name === 'hoje' && (
           <HomePage
-            onStartFlow={() => setScreen({ name: 'iniciar' })}
+            onRegister={(id) => setScreen({ name: 'registrar', id })}
             onOpenTrip={(id) => openTrip(id, 'hoje')}
             onTrips={() => setScreen({ name: 'viagens' })}
             onAdmin={profile.role === 'admin' ? () => setScreen({ name: 'admin' }) : undefined}
           />
         )}
 
-        {screen.name === 'iniciar' && (
-          <StartTripPage
+        {screen.name === 'registrar' && (
+          <RegisterTripPage
+            tripId={screen.id}
             onCancel={() => setScreen({ name: 'hoje' })}
-            onStarted={(id) => openTrip(id, 'hoje')}
+            onSaved={(id) => openTrip(id, 'hoje')}
           />
         )}
 
@@ -141,7 +139,12 @@ export function App() {
           <TripsPage onOpen={(id) => openTrip(id, 'viagens')} />
         )}
 
-        {screen.name === 'viagem' && <TripPage tripId={screen.id} />}
+        {screen.name === 'viagem' && (
+          <TripPage
+            tripId={screen.id}
+            onEdit={() => setScreen({ name: 'registrar', id: screen.id })}
+          />
+        )}
 
         {screen.name === 'admin' && (
           <AdminPage onOpen={(id) => openTrip(id, 'admin')} />

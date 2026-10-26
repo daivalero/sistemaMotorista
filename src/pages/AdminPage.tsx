@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Card } from '../components/Card'
 import { formatDateTime, formatMoney } from '../data'
-import { deliveriesOf, expenseTotal, expensesOf } from '../logic'
+import { attachmentsOf, expenseTotal, expensesOf } from '../logic'
 import { approveTrip, requestTripCorrection } from '../services/trips'
 import { useStore } from '../store'
 import type { Expense } from '../types'
@@ -10,9 +10,8 @@ type Props = {
   onOpen: (id: string) => void
 }
 
-function driverLabel(driverId: string, currentName?: string) {
+function driverLabel(driverId: string) {
   if (driverId === 'driver_demo_1042') return 'Carlos Mendes'
-  if (currentName && driverId.startsWith('driver')) return currentName
   return driverId
 }
 
@@ -26,23 +25,25 @@ export function AdminPage({ onOpen }: Props) {
           (trip) =>
             trip.status === 'aguardando_conferencia' || trip.status === 'precisa_correcao',
         )
-        .sort((a, b) => (b.endedAt ?? b.startedAt).localeCompare(a.endedAt ?? a.startedAt)),
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
     [state.trips],
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = state.trips.find((t) => t.id === (selectedId ?? queue[0]?.id)) ?? null
   const vehicle = selected ? state.vehicles.find((v) => v.id === selected.vehicleId) : null
-  const deliveries = selected ? deliveriesOf(state, selected.id) : []
   const expenses = selected ? expensesOf(state, selected.id) : []
+  const attachments = selected ? attachmentsOf(state, selected.id) : []
   const events = selected
-    ? state.events.filter((e) => e.tripId === selected.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    ? state.events
+        .filter((e) => e.tripId === selected.id)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : []
 
   if (!profile || profile.role !== 'admin') {
     return (
       <div className="empty-hero">
         <h2>Acesso restrito</h2>
-        <p>Apenas administradores conferem viagens.</p>
+        <p>Apenas administradores conferem registros.</p>
       </div>
     )
   }
@@ -52,7 +53,7 @@ export function AdminPage({ onOpen }: Props) {
     const result = approveTrip(selected, profile.id)
     dispatch({ type: 'upsert-trip', trip: result.trip })
     dispatch({ type: 'add-event', event: result.event })
-    notify('Viagem aprovada como concluída. Despesas seguem com revisão individual.')
+    notify('Viagem aprovada. Despesas seguem com revisão individual.')
   }
 
   const requestFix = () => {
@@ -62,7 +63,7 @@ export function AdminPage({ onOpen }: Props) {
     const result = requestTripCorrection(selected, profile.id, notes)
     dispatch({ type: 'upsert-trip', trip: result.trip })
     dispatch({ type: 'add-event', event: result.event })
-    notify('Viagem devolvida ao motorista para correção.')
+    notify('Registro devolvido para correção.')
   }
 
   const reviewExpense = (expense: Expense, status: Expense['reviewStatus']) => {
@@ -85,27 +86,24 @@ export function AdminPage({ onOpen }: Props) {
     <div className="page-stack">
       <header className="page-intro">
         <p className="home-section-label">Administração</p>
-        <h1>Conferência de viagens</h1>
-        <p className="muted">
-          Aprovar a viagem não aprova automaticamente cada despesa — revise uma a uma.
-        </p>
+        <h1>Conferência</h1>
+        <p className="muted">Aprovar a viagem não aprova automaticamente cada despesa.</p>
       </header>
 
       <div className="admin-grid">
         <Card padding="md">
           <h2>Fila</h2>
           {queue.length === 0 ? (
-            <p className="muted">Nenhuma viagem aguardando conferência.</p>
+            <p className="muted">Nenhum registro aguardando.</p>
           ) : (
             <ul className="home-routes">
               {queue.map((trip) => (
                 <li key={trip.id}>
                   <button type="button" onClick={() => setSelectedId(trip.id)}>
                     <span>
-                      <strong>{formatDateTime(trip.endedAt ?? trip.startedAt)}</strong>
+                      <strong>{trip.tripDate}</strong>
                       <small>
-                        {driverLabel(trip.driverId)} · {trip.distanceKm ?? '—'} km ·{' '}
-                        {deliveriesOf(state, trip.id).length} entregas
+                        {driverLabel(trip.driverId)} · {formatMoney(expenseTotal(expensesOf(state, trip.id)))}
                       </small>
                     </span>
                     <span className={`badge badge-${trip.status}`}>{trip.status}</span>
@@ -117,11 +115,11 @@ export function AdminPage({ onOpen }: Props) {
         </Card>
 
         {selected && (
-          <Card padding="md" className="admin-detail">
+          <Card padding="md">
             <div className="block-head">
               <h2>Detalhe</h2>
               <button type="button" className="text-btn" onClick={() => onOpen(selected.id)}>
-                Abrir completa
+                Abrir
               </button>
             </div>
             <p>
@@ -129,23 +127,11 @@ export function AdminPage({ onOpen }: Props) {
               {vehicle ? ` · ${vehicle.plate}` : ''}
             </p>
             <p className="muted">
-              Início {formatDateTime(selected.startedAt)} · Fim {formatDateTime(selected.endedAt)} ·
-              KM {selected.kmStart} → {selected.kmEnd ?? '—'} ({selected.distanceKm ?? '—'} km)
+              {selected.tripDate} · KM {selected.kmStart ?? '—'} → {selected.kmEnd ?? '—'} (
+              {selected.distanceKm ?? '—'} km)
             </p>
-            <p>Despesas: {formatMoney(expenseTotal(expenses))}</p>
-
-            <h3 className="subhead">Entregas</h3>
-            <ul className="home-summary">
-              {deliveries.map((d) => (
-                <li key={d.id}>
-                  <span>
-                    {d.clientName} · {d.status}
-                    {d.proofRequired && !d.proofDataUrl ? ' · sem comprovante' : ''}
-                  </span>
-                </li>
-              ))}
-              {deliveries.length === 0 && <li><span>Nenhuma entrega</span></li>}
-            </ul>
+            {selected.relato && <p style={{ whiteSpace: 'pre-wrap' }}>{selected.relato}</p>}
+            <p>Despesas: {formatMoney(expenseTotal(expenses))} · Anexos: {attachments.length}</p>
 
             <h3 className="subhead">Despesas</h3>
             <ul className="home-routes">
@@ -158,39 +144,20 @@ export function AdminPage({ onOpen }: Props) {
                       </strong>
                       <small>
                         {expense.reviewStatus}
-                        {expense.proofPending || !expense.proofDataUrl
-                          ? ' · comprovante pendente'
-                          : ''}
+                        {expense.proofPending || !expense.proofDataUrl ? ' · comprovante pendente' : ''}
                       </small>
                     </span>
                     <span className="admin-expense-actions">
-                      <button
-                        type="button"
-                        className="chip"
-                        onClick={() => reviewExpense(expense, 'aprovada')}
-                      >
+                      <button type="button" className="chip" onClick={() => reviewExpense(expense, 'aprovada')}>
                         Aprovar
                       </button>
-                      <button
-                        type="button"
-                        className="chip"
-                        onClick={() => reviewExpense(expense, 'rejeitada')}
-                      >
+                      <button type="button" className="chip" onClick={() => reviewExpense(expense, 'rejeitada')}>
                         Rejeitar
                       </button>
                     </span>
                   </div>
                 </li>
               ))}
-              {expenses.length === 0 && (
-                <li>
-                  <button type="button">
-                    <span>
-                      <strong>Sem despesas</strong>
-                    </span>
-                  </button>
-                </li>
-              )}
             </ul>
 
             <h3 className="subhead">Histórico</h3>
@@ -203,11 +170,6 @@ export function AdminPage({ onOpen }: Props) {
                   </span>
                 </li>
               ))}
-              {events.length === 0 && (
-                <li>
-                  <span>Sem eventos</span>
-                </li>
-              )}
             </ul>
 
             <div className="ticket-actions">

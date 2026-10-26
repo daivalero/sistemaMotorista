@@ -1,12 +1,11 @@
 export type AppRole = 'motorista' | 'admin'
 
 export type TripStatus =
-  | 'em_andamento'
+  | 'rascunho'
   | 'aguardando_conferencia'
   | 'precisa_correcao'
   | 'concluida'
-
-export type DeliveryStatus = 'pendente' | 'entregue' | 'ocorrencia'
+  | 'em_andamento' // legado — tratado como rascunho/editável na UI
 
 export type ExpenseCategory =
   | 'combustivel'
@@ -22,10 +21,10 @@ export type SyncState = 'local' | 'enviando' | 'sincronizado' | 'erro'
 export type Screen =
   | { name: 'hoje' }
   | { name: 'viagens' }
+  | { name: 'registrar'; id?: string }
   | { name: 'viagem'; id: string; from: 'hoje' | 'viagens' | 'admin' }
   | { name: 'perfil' }
   | { name: 'admin' }
-  | { name: 'iniciar' }
 
 export type Profile = {
   id: string
@@ -44,28 +43,15 @@ export type Vehicle = {
   active: boolean
 }
 
-export type Client = {
-  id: string
-  name: string
-  address: string
-  createdBy?: string
-}
-
-export type Delivery = {
+export type TripAttachment = {
   id: string
   tripId: string
-  clientId?: string
-  clientName: string
-  address: string
-  orderRef?: string
-  notes?: string
-  status: DeliveryStatus
-  occurrenceReason?: string
+  description?: string
   proofDataUrl?: string
-  proofRequired: boolean
-  completedAt?: string
+  proofPending: boolean
   createdAt: string
   updatedAt: string
+  clientRequestId: string
   syncState: SyncState
   syncError?: string
 }
@@ -81,10 +67,6 @@ export type Expense = {
   proofPending: boolean
   reviewStatus: ExpenseReview
   reviewNotes?: string
-  liters?: number
-  pricePerLiter?: number
-  odometer?: number
-  stationName?: string
   createdAt: string
   updatedAt: string
   clientRequestId: string
@@ -106,9 +88,11 @@ export type Trip = {
   driverId: string
   vehicleId: string
   status: TripStatus
+  tripDate: string
+  relato?: string
   startedAt: string
   endedAt?: string
-  kmStart: number
+  kmStart?: number
   kmEnd?: number
   distanceKm?: number
   correctionNotes?: string
@@ -116,6 +100,7 @@ export type Trip = {
   updatedAt: string
   syncState: SyncState
   syncError?: string
+  clientRequestId: string
 }
 
 export type AppState = {
@@ -124,10 +109,9 @@ export type AppState = {
     profile: Profile | null
   }
   vehicles: Vehicle[]
-  clients: Client[]
   trips: Trip[]
-  deliveries: Delivery[]
   expenses: Expense[]
+  attachments: TripAttachment[]
   events: TripEvent[]
 }
 
@@ -136,19 +120,10 @@ export type Action =
   | { type: 'login'; profile: Profile }
   | { type: 'logout' }
   | { type: 'upsert-vehicle'; vehicle: Vehicle }
-  | { type: 'upsert-client'; client: Client }
   | { type: 'upsert-trip'; trip: Trip }
-  | { type: 'upsert-delivery'; delivery: Delivery }
   | { type: 'upsert-expense'; expense: Expense }
+  | { type: 'remove-expense'; id: string }
+  | { type: 'upsert-attachment'; attachment: TripAttachment }
+  | { type: 'remove-attachment'; id: string }
   | { type: 'add-event'; event: TripEvent }
   | { type: 'replace-all'; state: AppState }
-
-/** @deprecated kept for older checklist pages during transition */
-export type StopStatus = DeliveryStatus | 'em_rota'
-export type CheckItem = {
-  id: string
-  grupo: string
-  label: string
-  detalhe: string
-  ok: boolean | null
-}

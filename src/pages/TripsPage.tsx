@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Card } from '../components/Card'
-import { formatDateTime } from '../data'
-import { deliveriesOf } from '../logic'
+import { formatDateTime, formatMoney } from '../data'
+import { expenseTotal, expensesOf } from '../logic'
 import { useStore } from '../store'
 import type { TripStatus } from '../types'
 
 const filters: { id: 'todas' | TripStatus; label: string }[] = [
   { id: 'todas', label: 'Todas' },
-  { id: 'em_andamento', label: 'Em andamento' },
-  { id: 'aguardando_conferencia', label: 'Conferência' },
+  { id: 'rascunho', label: 'Rascunhos' },
+  { id: 'aguardando_conferencia', label: 'Enviados' },
   { id: 'precisa_correcao', label: 'Correção' },
   { id: 'concluida', label: 'Concluídas' },
 ]
@@ -26,8 +26,12 @@ export function TripsPage({ onOpen }: Props) {
     if (!profile) return []
     return state.trips
       .filter((trip) => (profile.role === 'admin' ? true : trip.driverId === profile.id))
-      .filter((trip) => (filter === 'todas' ? true : trip.status === filter))
-      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+      .filter((trip) => {
+        if (filter === 'todas') return true
+        if (filter === 'rascunho') return trip.status === 'rascunho' || trip.status === 'em_andamento'
+        return trip.status === filter
+      })
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }, [state.trips, profile, filter])
 
   if (!profile) return null
@@ -36,8 +40,8 @@ export function TripsPage({ onOpen }: Props) {
     <div className="page-stack">
       <header className="page-intro">
         <p className="home-section-label">Histórico</p>
-        <h1>Minhas viagens</h1>
-        <p className="muted">Consulte entregas, despesas e documentos. Viagens concluídas não podem ser alteradas livremente.</p>
+        <h1>Meus registros</h1>
+        <p className="muted">Consulte viagens salvas, rascunhos e status de sincronização.</p>
       </header>
 
       <div className="filters">
@@ -55,8 +59,8 @@ export function TripsPage({ onOpen }: Props) {
 
       {trips.length === 0 ? (
         <Card padding="lg">
-          <h2>Nenhuma viagem aqui</h2>
-          <p className="muted">Inicie uma viagem na home para começar a registrar entregas e gastos.</p>
+          <h2>Nenhum registro aqui</h2>
+          <p className="muted">Use “Registrar viagem” na home para criar o primeiro.</p>
         </Card>
       ) : (
         <ul className="trip-list">
@@ -64,15 +68,17 @@ export function TripsPage({ onOpen }: Props) {
             <li key={trip.id}>
               <button type="button" className="trip-card" onClick={() => onOpen(trip.id)}>
                 <div className="trip-card-top">
-                  <strong>{formatDateTime(trip.startedAt)}</strong>
+                  <strong>{trip.tripDate}</strong>
                   <span className={`badge badge-${trip.status}`}>{statusLabel(trip.status)}</span>
                 </div>
                 <p className="muted">
-                  {deliveriesOf(state, trip.id).length} entregas · KM {trip.kmStart}
-                  {trip.kmEnd != null ? ` → ${trip.kmEnd}` : ''}
+                  {expensesOf(state, trip.id).length} gastos ·{' '}
+                  {formatMoney(expenseTotal(expensesOf(state, trip.id)))}
                   {trip.distanceKm != null ? ` · ${trip.distanceKm} km` : ''}
                 </p>
-                {trip.syncState === 'local' && <span className="sync-pill">Local</span>}
+                <p className="fine left">Atualizado {formatDateTime(trip.updatedAt)}</p>
+                {trip.syncState === 'local' && <span className="sync-pill">Neste aparelho</span>}
+                {trip.syncState === 'sincronizado' && <span className="sync-pill">Sincronizado</span>}
               </button>
             </li>
           ))}
@@ -84,10 +90,11 @@ export function TripsPage({ onOpen }: Props) {
 
 function statusLabel(status: string) {
   switch (status) {
+    case 'rascunho':
     case 'em_andamento':
-      return 'Em andamento'
+      return 'Rascunho'
     case 'aguardando_conferencia':
-      return 'Conferência'
+      return 'Enviado'
     case 'precisa_correcao':
       return 'Correção'
     case 'concluida':

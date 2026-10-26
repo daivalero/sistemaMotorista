@@ -1,20 +1,20 @@
-import type { Action, AppState, Delivery, Expense, Trip } from './types'
+import type { Action, AppState, Expense, Trip, TripAttachment } from './types'
 
 export function tripDistance(trip: Trip) {
-  if (trip.kmEnd == null) return undefined
+  if (trip.kmStart == null || trip.kmEnd == null) return undefined
   return Math.max(0, Number((trip.kmEnd - trip.kmStart).toFixed(1)))
-}
-
-export function deliveriesOf(state: AppState, tripId: string) {
-  return state.deliveries.filter((item) => item.tripId === tripId)
 }
 
 export function expensesOf(state: AppState, tripId: string) {
   return state.expenses.filter((item) => item.tripId === tripId)
 }
 
+export function attachmentsOf(state: AppState, tripId: string) {
+  return state.attachments.filter((item) => item.tripId === tripId)
+}
+
 export function expenseTotal(expenses: Expense[]) {
-  return expenses.reduce((sum, item) => sum + item.amount, 0)
+  return expenses.reduce((sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0), 0)
 }
 
 export function expenseTotalsByCategory(expenses: Expense[]) {
@@ -24,31 +24,14 @@ export function expenseTotalsByCategory(expenses: Expense[]) {
   }, {})
 }
 
-export function deliveryCounts(deliveries: Delivery[]) {
-  return {
-    total: deliveries.length,
-    pendente: deliveries.filter((d) => d.status === 'pendente').length,
-    entregue: deliveries.filter((d) => d.status === 'entregue').length,
-    ocorrencia: deliveries.filter((d) => d.status === 'ocorrencia').length,
-    proofMissing: deliveries.filter(
-      (d) => d.proofRequired && !d.proofDataUrl && d.status === 'entregue',
-    ).length,
-  }
-}
-
-export function expenseProofMissing(expenses: Expense[]) {
-  return expenses.filter((e) => e.proofPending || (!e.proofDataUrl && e.category === 'combustivel'))
-    .length
-}
-
 export function canEditTrip(trip: Trip) {
-  return trip.status === 'em_andamento' || trip.status === 'precisa_correcao'
+  return trip.status === 'rascunho' || trip.status === 'em_andamento' || trip.status === 'precisa_correcao'
 }
 
-export function activeTripForDriver(state: AppState, driverId: string) {
-  return state.trips.find(
-    (trip) => trip.driverId === driverId && trip.status === 'em_andamento',
-  )
+export function pendingProofs(expenses: Expense[], attachments: TripAttachment[]) {
+  const expensePending = expenses.filter((e) => e.proofPending || !e.proofDataUrl).length
+  const attachmentPending = attachments.filter((a) => a.proofPending || !a.proofDataUrl).length
+  return expensePending + attachmentPending
 }
 
 function upsert<T extends { id: string }>(list: T[], item: T) {
@@ -65,32 +48,38 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'replace-all':
       return action.state
     case 'login':
-      return {
-        ...state,
-        session: { loggedIn: true, profile: action.profile },
-      }
+      return { ...state, session: { loggedIn: true, profile: action.profile } }
     case 'logout':
-      return {
-        ...state,
-        session: { loggedIn: false, profile: null },
-      }
+      return { ...state, session: { loggedIn: false, profile: null } }
     case 'upsert-vehicle':
       return { ...state, vehicles: upsert(state.vehicles, action.vehicle) }
-    case 'upsert-client':
-      return { ...state, clients: upsert(state.clients, action.client) }
-    case 'upsert-trip':
+    case 'upsert-trip': {
+      const byRequest = state.trips.find(
+        (item) => item.clientRequestId === action.trip.clientRequestId && item.id !== action.trip.id,
+      )
+      if (byRequest) return state
       return { ...state, trips: upsert(state.trips, action.trip) }
-    case 'upsert-delivery':
-      return { ...state, deliveries: upsert(state.deliveries, action.delivery) }
+    }
     case 'upsert-expense': {
       const byRequest = state.expenses.find(
-        (item) => item.clientRequestId === action.expense.clientRequestId,
+        (item) => item.clientRequestId === action.expense.clientRequestId && item.id !== action.expense.id,
       )
-      if (byRequest && byRequest.id !== action.expense.id) {
-        return state
-      }
+      if (byRequest) return state
       return { ...state, expenses: upsert(state.expenses, action.expense) }
     }
+    case 'remove-expense':
+      return { ...state, expenses: state.expenses.filter((item) => item.id !== action.id) }
+    case 'upsert-attachment': {
+      const byRequest = state.attachments.find(
+        (item) =>
+          item.clientRequestId === action.attachment.clientRequestId &&
+          item.id !== action.attachment.id,
+      )
+      if (byRequest) return state
+      return { ...state, attachments: upsert(state.attachments, action.attachment) }
+    }
+    case 'remove-attachment':
+      return { ...state, attachments: state.attachments.filter((item) => item.id !== action.id) }
     case 'add-event':
       return { ...state, events: [...state.events, action.event] }
     default:

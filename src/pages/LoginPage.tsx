@@ -15,8 +15,8 @@ type Props = {
 const benefits = [
   {
     icon: MapPinned,
-    title: 'Entregas na viagem',
-    description: 'Registre clientes e comprovantes no percurso.',
+    title: 'Relato livre',
+    description: 'Descreva entregas e ocorrências sem etapas extras.',
   },
   {
     icon: ClipboardCheck,
@@ -57,13 +57,12 @@ export function LoginPage({ error, onSubmit }: Props) {
       <section className="login-hero">
         <Logo variant="full" />
         <h1 className="hero-title">
-          Viagens com
+          Um formulário
           <br />
-          entregas e gastos
+          para a viagem
         </h1>
         <p className="hero-copy">
-          Inicie a viagem, registre entregas e despesas, finalize com quilometragem e envie para
-          conferência.
+          Registre data, KM, relato, gastos e comprovantes na mesma tela — simples no celular.
         </p>
         <ul className="login-benefits">
           {benefits.map((item) => {

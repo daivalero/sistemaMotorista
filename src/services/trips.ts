@@ -1,15 +1,16 @@
 import { createId } from '../lib/id'
-import { supabase, supabaseConfigured } from '../lib/supabase'
+import { supabaseConfigured } from '../lib/supabase'
 import type {
-  Client,
-  Delivery,
   Expense,
   ExpenseCategory,
   Profile,
   Trip,
+  TripAttachment,
   TripEvent,
+  TripStatus,
   Vehicle,
 } from '../types'
+import { tripDistance } from '../logic'
 
 function nowIso() {
   return new Date().toISOString()
@@ -46,136 +47,111 @@ export function ensureDriverSeed(profile: Profile): {
   }
 }
 
-export function createTrip(input: {
+export type TripFormExpense = {
+  localKey: string
+  id?: string
+  clientRequestId: string
+  category: ExpenseCategory
+  amount: string
+  expenseDate: string
+  notes: string
+  proofDataUrl?: string
+  proofPending: boolean
+}
+
+export type TripFormAttachment = {
+  localKey: string
+  id?: string
+  clientRequestId: string
+  description: string
+  proofDataUrl?: string
+  proofPending: boolean
+}
+
+export function buildTripFromForm(input: {
+  existing?: Trip
   driverId: string
   vehicleId: string
-  kmStart: number
+  tripDate: string
+  kmStart?: number
+  kmEnd?: number
+  relato?: string
+  status: Extract<TripStatus, 'rascunho' | 'aguardando_conferencia'>
+  clientRequestId: string
 }): { trip: Trip; event: TripEvent } {
-  const startedAt = nowIso()
+  const stamp = nowIso()
+  const startedAt = input.existing?.startedAt ?? `${input.tripDate}T12:00:00.000Z`
   const trip: Trip = {
-    id: createId('trip'),
+    id: input.existing?.id ?? createId('trip'),
     driverId: input.driverId,
     vehicleId: input.vehicleId,
-    status: 'em_andamento',
+    status: input.status,
+    tripDate: input.tripDate,
+    relato: input.relato?.trim() || undefined,
     startedAt,
+    endedAt:
+      input.status === 'aguardando_conferencia' ? stamp : input.existing?.endedAt,
     kmStart: input.kmStart,
-    createdAt: startedAt,
-    updatedAt: startedAt,
+    kmEnd: input.kmEnd,
+    distanceKm: undefined,
+    correctionNotes: input.existing?.correctionNotes,
+    createdAt: input.existing?.createdAt ?? stamp,
+    updatedAt: stamp,
     syncState: supabaseConfigured ? 'enviando' : 'local',
+    clientRequestId: input.clientRequestId,
   }
+  trip.distanceKm = tripDistance(trip)
+
   const event: TripEvent = {
     id: createId('evt'),
     tripId: trip.id,
     actorId: input.driverId,
-    action: 'iniciar_viagem',
-    detail: `KM inicial ${input.kmStart}`,
-    createdAt: startedAt,
+    action: input.status === 'rascunho' ? 'salvar_rascunho' : 'salvar_registro',
+    detail: `Data ${input.tripDate}`,
+    createdAt: stamp,
   }
   return { trip, event }
 }
 
-export function createDelivery(input: {
-  tripId: string
-  clientName: string
-  address: string
-  orderRef?: string
-  notes?: string
-  clientId?: string
-}): Delivery {
+export function expenseFromForm(
+  tripId: string,
+  row: TripFormExpense,
+): Expense {
   const stamp = nowIso()
+  const amount = Number(String(row.amount).replace(',', '.'))
   return {
-    id: createId('del'),
-    tripId: input.tripId,
-    clientId: input.clientId,
-    clientName: input.clientName.trim(),
-    address: input.address.trim(),
-    orderRef: input.orderRef?.trim() || undefined,
-    notes: input.notes?.trim() || undefined,
-    status: 'pendente',
-    proofRequired: true,
-    createdAt: stamp,
-    updatedAt: stamp,
-    syncState: supabaseConfigured ? 'enviando' : 'local',
-  }
-}
-
-export function createClient(input: {
-  name: string
-  address: string
-  createdBy?: string
-}): Client {
-  return {
-    id: createId('cli'),
-    name: input.name.trim(),
-    address: input.address.trim(),
-    createdBy: input.createdBy,
-  }
-}
-
-export function createExpense(input: {
-  tripId: string
-  category: ExpenseCategory
-  amount: number
-  expenseDate?: string
-  notes?: string
-  proofDataUrl?: string
-  proofPending?: boolean
-  liters?: number
-  pricePerLiter?: number
-  odometer?: number
-  stationName?: string
-  clientRequestId?: string
-}): Expense {
-  const stamp = nowIso()
-  const clientRequestId = input.clientRequestId ?? createId('req')
-  return {
-    id: createId('exp'),
-    tripId: input.tripId,
-    category: input.category,
-    amount: Number(input.amount),
-    expenseDate: input.expenseDate || todayDate(),
-    notes: input.notes?.trim() || undefined,
-    proofDataUrl: input.proofDataUrl,
-    proofPending: Boolean(input.proofPending) || !input.proofDataUrl,
+    id: row.id ?? createId('exp'),
+    tripId,
+    category: row.category,
+    amount: Number.isFinite(amount) ? amount : 0,
+    expenseDate: row.expenseDate || todayDate(),
+    notes: row.notes.trim() || undefined,
+    proofDataUrl: row.proofDataUrl,
+    proofPending: row.proofPending || !row.proofDataUrl,
     reviewStatus: 'pendente',
-    liters: input.liters,
-    pricePerLiter: input.pricePerLiter,
-    odometer: input.odometer,
-    stationName: input.stationName?.trim() || undefined,
     createdAt: stamp,
     updatedAt: stamp,
-    clientRequestId,
+    clientRequestId: row.clientRequestId,
     syncState: supabaseConfigured ? 'enviando' : 'local',
   }
 }
 
-export function finishTrip(trip: Trip, kmEnd: number, actorId: string) {
-  if (kmEnd < trip.kmStart) {
-    throw new Error('A quilometragem final não pode ser menor que a inicial.')
-  }
-  if (trip.status !== 'em_andamento' && trip.status !== 'precisa_correcao') {
-    throw new Error('Esta viagem já foi finalizada.')
-  }
-  const endedAt = nowIso()
-  const distanceKm = Number((kmEnd - trip.kmStart).toFixed(1))
-  const next: Trip = {
-    ...trip,
-    kmEnd,
-    distanceKm,
-    endedAt,
-    status: 'aguardando_conferencia',
-    updatedAt: endedAt,
+export function attachmentFromForm(
+  tripId: string,
+  row: TripFormAttachment,
+): TripAttachment {
+  const stamp = nowIso()
+  return {
+    id: row.id ?? createId('att'),
+    tripId,
+    description: row.description.trim() || undefined,
+    proofDataUrl: row.proofDataUrl,
+    proofPending: row.proofPending || !row.proofDataUrl,
+    createdAt: stamp,
+    updatedAt: stamp,
+    clientRequestId: row.clientRequestId,
     syncState: supabaseConfigured ? 'enviando' : 'local',
   }
-  const event: TripEvent = {
-    id: createId('evt'),
-    tripId: trip.id,
-    actorId,
-    action: 'finalizar_viagem',
-    detail: `KM final ${kmEnd} · ${distanceKm} km`,
-    createdAt: endedAt,
-  }
-  return { trip: next, event }
 }
 
 export function approveTrip(trip: Trip, actorId: string) {
@@ -218,26 +194,6 @@ export function requestTripCorrection(trip: Trip, actorId: string, notes: string
   }
 }
 
-export async function pushTripToSupabase(trip: Trip) {
-  if (!supabase) return { ok: false as const, reason: 'offline' as const }
-  const { error } = await supabase.from('trips').upsert({
-    id: trip.id,
-    driver_id: trip.driverId,
-    vehicle_id: trip.vehicleId,
-    status: trip.status,
-    started_at: trip.startedAt,
-    ended_at: trip.endedAt ?? null,
-    km_start: trip.kmStart,
-    km_end: trip.kmEnd ?? null,
-    distance_km: trip.distanceKm ?? null,
-    correction_notes: trip.correctionNotes ?? null,
-    created_at: trip.createdAt,
-    updated_at: trip.updatedAt,
-  })
-  if (error) return { ok: false as const, reason: error.message }
-  return { ok: true as const }
-}
-
 export function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -245,4 +201,8 @@ export function fileToDataUrl(file: File) {
     reader.onerror = () => reject(new Error('Falha ao ler o arquivo'))
     reader.readAsDataURL(file)
   })
+}
+
+export function newFormKey(prefix: string) {
+  return createId(prefix)
 }

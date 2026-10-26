@@ -1,28 +1,21 @@
 # Transportadora Braulio — sistema do motorista
 
-Registro de viagens agregadas: início com KM, entregas, gastos com comprovantes, finalização e conferência administrativa.
+Formulário único **Registrar viagem**: data, motorista, veículo, KM, relato, gastos e comprovantes.
 
 ## Rodar
 
 ```bash
 npm install
-cp .env.example .env   # opcional: preencha Supabase
+cp .env.example .env   # opcional: Supabase
 npm run dev
 ```
 
-### Demo local (sem inventar viagens)
+Demo local: motorista `1042`/`rota` · admin `9001`/`admin`
 
-- Motorista: matrícula `1042`, senha `rota`
-- Admin: matrícula `9001`, senha `admin`
+## Supabase
 
-Sem `VITE_SUPABASE_*`, os registros ficam **neste aparelho** e o app deixa isso explícito. Não há viagens fictícias pré-carregadas.
+1. Rode `supabase/migrations/001_viagens.sql`
+2. Depois `supabase/migrations/002_registro_simples.sql` (aditivo: `rascunho`, `trip_date`, `relato`, `trip_attachments`)
+3. Preencha `.env`
 
-### Supabase
-
-1. Crie o projeto e rode `supabase/migrations/001_viagens.sql`
-2. Preencha `.env` com URL e anon key
-3. Bucket `comprovantes` (já no SQL)
-
-## PWA
-
-Instalável no celular (Android/iOS) via aviso do app ou “Adicionar à Tela de Início”.
+Sem Supabase, os registros ficam neste aparelho e o app deixa isso explícito.

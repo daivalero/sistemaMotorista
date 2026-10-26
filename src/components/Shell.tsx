@@ -8,7 +8,7 @@ type NavName = 'hoje' | 'viagens' | 'admin' | 'perfil'
 
 type Props = {
   title: string
-  active: NavName | 'iniciar'
+  active: NavName | 'registrar'
   showBack?: boolean
   onBack?: () => void
   onNavigate: (screen: Screen) => void
@@ -38,7 +38,7 @@ export function Shell({
     { name: 'perfil' as const, label: 'Perfil', icon: 'perfil' as const },
   ]
 
-  const current = active === 'iniciar' ? 'hoje' : active
+  const current = active === 'registrar' ? 'hoje' : active
 
   return (
     <div className="app">
