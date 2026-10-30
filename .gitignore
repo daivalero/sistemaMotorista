@@ -1,4 +1,8 @@
 node_modules
 dist
+.expo
+.env
+android
+ios
 .DS_Store
 *.local

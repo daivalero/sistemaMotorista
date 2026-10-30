@@ -1,5 +1,4 @@
 import { createId } from '../lib/id'
-import { supabaseConfigured } from '../lib/supabase'
 import type {
   Expense,
   ExpenseCategory,
@@ -97,7 +96,7 @@ export function buildTripFromForm(input: {
     correctionNotes: input.existing?.correctionNotes,
     createdAt: input.existing?.createdAt ?? stamp,
     updatedAt: stamp,
-    syncState: supabaseConfigured ? 'enviando' : 'local',
+    syncState: 'local',
     clientRequestId: input.clientRequestId,
   }
   trip.distanceKm = tripDistance(trip)
@@ -132,7 +131,7 @@ export function expenseFromForm(
     createdAt: stamp,
     updatedAt: stamp,
     clientRequestId: row.clientRequestId,
-    syncState: supabaseConfigured ? 'enviando' : 'local',
+    syncState: 'local',
   }
 }
 
@@ -150,7 +149,7 @@ export function attachmentFromForm(
     createdAt: stamp,
     updatedAt: stamp,
     clientRequestId: row.clientRequestId,
-    syncState: supabaseConfigured ? 'enviando' : 'local',
+    syncState: 'local',
   }
 }
 
@@ -161,7 +160,7 @@ export function approveTrip(trip: Trip, actorId: string) {
       ...trip,
       status: 'concluida' as const,
       updatedAt: stamp,
-      syncState: (supabaseConfigured ? 'enviando' : 'local') as Trip['syncState'],
+      syncState: 'local' as Trip['syncState'],
     },
     event: {
       id: createId('evt'),
@@ -181,7 +180,7 @@ export function requestTripCorrection(trip: Trip, actorId: string, notes: string
       status: 'precisa_correcao' as const,
       correctionNotes: notes.trim(),
       updatedAt: stamp,
-      syncState: (supabaseConfigured ? 'enviando' : 'local') as Trip['syncState'],
+      syncState: 'local' as Trip['syncState'],
     },
     event: {
       id: createId('evt'),
@@ -194,13 +193,13 @@ export function requestTripCorrection(trip: Trip, actorId: string, notes: string
   }
 }
 
-export function fileToDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(new Error('Falha ao ler o arquivo'))
-    reader.readAsDataURL(file)
-  })
+export function imageToDataUrl(asset: {
+  base64?: string | null
+  mimeType?: string | null
+  uri: string
+}) {
+  if (!asset.base64) return asset.uri
+  return `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}`
 }
 
 export function newFormKey(prefix: string) {

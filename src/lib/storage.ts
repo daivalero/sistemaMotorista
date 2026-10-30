@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { AppState } from '../types'
 
 export const STORAGE_KEY = 'braulio-viagens-v3'
@@ -13,12 +14,11 @@ export function emptyState(): AppState {
   }
 }
 
-export function loadState(): AppState {
+export async function loadState(): Promise<AppState> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = await AsyncStorage.getItem(STORAGE_KEY)
     if (!raw) {
-      // migrate from v2 if present
-      const legacy = localStorage.getItem('braulio-viagens-v2')
+      const legacy = await AsyncStorage.getItem('braulio-viagens-v2')
       if (!legacy) return emptyState()
       const parsed = JSON.parse(legacy) as Partial<AppState> & {
         deliveries?: unknown
@@ -73,6 +73,6 @@ function normalizeLoaded(parsed: Partial<AppState> & { trips?: Array<Record<stri
   }
 }
 
-export function saveState(state: AppState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+export async function saveState(state: AppState) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }

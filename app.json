@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Transportadora Braulio",
+    "slug": "sistema-motorista",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./public/icons/icon-512.png",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.transportadorabraulio.motorista",
+      "adaptiveIcon": {
+        "foregroundImage": "./public/icons/icon-maskable-512.png",
+        "backgroundColor": "#0b0d10"
+      },
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.transportadorabraulio.motorista"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Permita que o app fotografe comprovantes e documentos da viagem.",
+          "photosPermission": "Permita que o app acesse fotos de comprovantes e documentos."
+        }
+      ]
+    ]
+  }
+}
