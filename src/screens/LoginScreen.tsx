@@ -60,7 +60,7 @@ export function LoginScreen() {
       >
         <View style={styles.brand}>
           <Image
-            source={require('../../public/brand/braulio-logo.png')}
+            source={require('../../assets/brand/braulio-logo.png')}
             style={styles.logo}
             resizeMode="contain"
             accessibilityLabel="Transportadora Braulio"

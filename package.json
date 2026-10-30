@@ -5,6 +5,7 @@
   "main": "expo/AppEntry",
   "scripts": {
     "start": "expo start",
+    "start:tunnel": "expo start --tunnel ngrok",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
     "build": "expo export --platform android"
@@ -17,7 +18,7 @@
     "expo-status-bar": "^58.0.4",
     "lucide-react-native": "^1.65.0",
     "react": "19.3.0",
-    "react-dom": "^19.3.0",
+    "react-dom": "19.3.0",
     "react-native": "^0.88.1",
     "react-native-svg": "15.16.0",
     "react-native-url-polyfill": "^4.0.0"

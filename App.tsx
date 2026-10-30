@@ -61,7 +61,7 @@ function NativeApp() {
             </Pressable>
           ) : screen.name === 'hoje' ? (
             <Image
-              source={require('./public/brand/braulio-logo.png')}
+              source={require('./assets/brand/braulio-logo.png')}
               style={styles.logo}
               resizeMode="contain"
             />

@@ -1,37 +1,41 @@
 # Transportadora Braulio — app do motorista
 
-Aplicativo nativo Android feito com TypeScript, React Native e Expo. O motorista registra
-data, veículo, quilometragem, relato, gastos e fotos de comprovantes em uma única tela.
+App nativo (TypeScript + React Native + Expo) para registrar viagens:
+data, veículo, KM, relato, gastos e comprovantes.
 
-## Recursos
+## Estrutura
 
-- funcionamento offline com persistência no aparelho (AsyncStorage);
-- captura de comprovantes pela câmera;
-- rascunhos e histórico de viagens;
-- fluxo de conferência para administradores;
-- cliente Supabase preparado para sessão persistente;
-- interface nativa em tema escuro, otimizada para Android.
+```text
+App.tsx                 # entrada e navegação
+app.json                # config Expo / Android
+assets/                 # ícones e logo
+src/
+  components/           # UI nativa compartilhada
+  screens/              # telas do app
+  services/             # regras de viagem
+  lib/                  # storage, ids, supabase
+  store.tsx             # estado global
+  logic.ts              # helpers de domínio
+  types.ts              # tipos
+supabase/migrations/    # SQL do backend (opcional)
+```
 
-## Executar no Android
-
-Requisitos: Node.js e o app Expo Go em um aparelho Android, ou Android Studio com um emulador.
+## Executar
 
 ```bash
 npm install
-cp .env.example .env # opcional
-npm run start
+cp .env.example .env   # opcional
+npm start
 ```
 
-Leia o QR Code com o Expo Go. Para abrir diretamente em um emulador já iniciado:
+No celular, abra com Expo Go. Em iPhone, faça login no CLI com a mesma conta:
 
 ```bash
-npm run android
+npx expo login --no-browser -u sua_conta
+npm run start:tunnel
 ```
 
-Credenciais locais:
-
-- motorista: `1042` / `rota`
-- administrador: `9001` / `admin`
+Credenciais locais: motorista `1042`/`rota` · admin `9001`/`admin`
 
 ## Verificações
 
@@ -40,14 +44,10 @@ npm run typecheck
 npm run build
 ```
 
-`npm run build` gera o bundle Android em `dist/`. Para criar APK/AAB de produção, configure
-o EAS Build com a conta Expo do projeto.
+## Supabase (opcional)
 
-## Supabase
+1. Aplique `supabase/migrations/001_viagens.sql`
+2. Aplique `supabase/migrations/002_registro_simples.sql`
+3. Preencha `.env` com `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
-1. Aplique `supabase/migrations/001_viagens.sql`.
-2. Aplique `supabase/migrations/002_registro_simples.sql`.
-3. Copie `.env.example` para `.env` e informe a URL e a chave publicável (ou `anon`).
-
-Nunca coloque uma chave `service_role` no aplicativo. Sem Supabase configurado, os registros
-continuam disponíveis apenas neste aparelho.
+Sem Supabase, os registros ficam neste aparelho.

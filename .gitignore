@@ -1,8 +1,9 @@
-node_modules
-dist
-.expo
+node_modules/
+dist/
+.expo/
 .env
-android
-ios
+android/
+ios/
 .DS_Store
 *.local
+npm-debug.log*

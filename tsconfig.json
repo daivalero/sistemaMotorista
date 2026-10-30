@@ -6,20 +6,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "App.tsx",
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
-  "exclude": [
-    "src/main.tsx",
-    "src/App.tsx",
-    "src/pages/**/*.tsx",
-    "src/components/Card.tsx",
-    "src/components/Icons.tsx",
-    "src/components/Logo.tsx",
-    "src/components/Shell.tsx",
-    "src/components/Ui.tsx",
-    "src/components/pwa/**/*.tsx"
-  ]
+  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }

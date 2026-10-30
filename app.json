@@ -4,17 +4,15 @@
     "slug": "sistema-motorista",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./public/icons/icon-512.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.transportadorabraulio.motorista",
       "adaptiveIcon": {
-        "foregroundImage": "./public/icons/icon-maskable-512.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0b0d10"
       },
-      "permissions": [
-        "CAMERA"
-      ]
+      "permissions": ["CAMERA"]
     },
     "ios": {
       "supportsTablet": true,
